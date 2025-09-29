@@ -4,22 +4,22 @@
 **Prerequisites**: User-provided context
 
 ## Phase 3.1: Setup & Foundation
-- [ ] T001 [P] Initialize Next.js 15 application with TypeScript, Tailwind CSS, and shadcn/ui.
-- [ ] T002 [P] Create PWA assets: `public/manifest.webmanifest`, icons, and `workers/service-worker.ts`.
-- [ ] T003 [P] Write Supabase schema SQL for all tables (users, vendors, orders, etc.) in `db/schema.sql`.
-- [ ] T004 [P] Write Supabase RLS policies for all tables in `db/rls.sql`.
-- [ ] T005 [P] Create a seed script `db/seed.ts` to populate the database with sample data.
-- [ ] T006 [P] Configure Drizzle ORM and create initial migration scripts in `db/migrations/`.
-- [ ] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
-- [ ] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests.
-- [ ] T009 [P] Create the basic application layout in `app/layout.tsx`.
+- [X] T001 [P] Initialize Next.js 15 application with TypeScript, Tailwind CSS, and shadcn/ui.
+- [X] T002 [P] Create PWA assets: `public/manifest.webmanifest`, icons, and `workers/service-worker.ts`.
+- [X] T003 [P] Write Supabase schema SQL for all tables (users, vendors, orders, etc.) in `db/schema.sql`.
+- [X] T004 [P] Write Supabase RLS policies for all tables in `db/rls.sql`.
+- [X] T005 [P] Create a seed script `db/seed.ts` to populate the database with sample data.
+- [X] T006 [P] Configure Drizzle ORM and create initial migration scripts in `db/migrations/`.
+- [X] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
+- [X] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests.
+- [X] T009 [P] Create the basic application layout in `app/layout.tsx`.
 
 ## Phase 3.2: Tests First (TDD)
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T010 [P] Write Playwright E2E test for the customer order flow in `tests/e2e/customer-flow.spec.ts`.
-- [ ] T011 [P] Write Playwright E2E test for the vendor order management flow in `tests/e2e/vendor-flow.spec.ts`.
-- [ ] T012 [P] Write Playwright E2E test for the courier delivery flow in `tests/e2e/courier-flow.spec.ts`.
-- [ ] T013 [P] Write Vitest unit tests for RBAC logic in `lib/rbac.ts` to ensure RLS rules are correctly implemented in functions.
+- [X] T010 [P] Write Playwright E2E test for the customer order flow in `tests/e2e/customer-flow.spec.ts`.
+- [X] T011 [P] Write Playwright E2E test for the vendor order management flow in `tests/e2e/vendor-flow.spec.ts`.
+- [X] T012 [P] Write Playwright E2E test for the courier delivery flow in `tests/e2e/courier-flow.spec.ts`.
+- [X] T013 [P] Write Vitest unit tests for RBAC logic in `lib/rbac.ts` to ensure RLS rules are correctly implemented in functions.
 
 ## Phase 3.3: Core Implementation (Customer Flow)
 - [ ] T014 [P] Implement the city selection and vendor search page at `app/page.tsx`.

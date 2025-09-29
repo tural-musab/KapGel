@@ -1,0 +1,43 @@
+{
+  "name": "temp-next-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "precommit": "pnpm lint && pnpm test"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.55.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "drizzle-kit": "^0.31.5",
+    "drizzle-orm": "^0.44.5",
+    "lucide-react": "^0.544.0",
+    "next": "15.5.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tailwindcss-animate": "^1.0.7",
+    "vitest": "^3.2.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.4",
+    "jsdom": "^27.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

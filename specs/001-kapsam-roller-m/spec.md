@@ -7,6 +7,17 @@
 
 ---
 
+## Clarifications
+
+### Session 2025-09-29
+- Q: How should the data model support multiple cities? → A: Use a `cities > districts > neighborhoods` hierarchy. Orders will store `address_text` and a `geo_point`.
+- Q: How should delivery zones be defined? → A: Each vendor branch will have a `delivery_zone_geojson` field (Polygon/MultiPolygon).
+- Q: What is the courier location ping interval? → A: 15 seconds when the app is in the foreground, with a server TTL of 45 seconds. A manual "check-in" button will be used when the app is passive.
+- Q: What is the fallback for Web Push notifications? → A: Email will be used for the MVP; SMS will be considered later.
+- Q: How are vendors verified? → A: A manual KYC process involving `tax_no`, document uploads, and admin approval.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### Primary User Story
@@ -23,7 +34,7 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 4.  **Given** a courier accepts a delivery task, **When** they update their status (e.g., "On the way", "Delivered"), **Then** the order status MUST be updated in real-time for both the customer and the vendor.
 
 ### Edge Cases
-- What happens if a courier loses their connection while their location is being shared?
+- What happens if a courier loses their connection while their location is being shared? (The system should rely on the server-side TTL of 45s and show the last known location).
 - How does the system handle a customer attempting to cancel an order after it has been prepared?
 - What is the process for a vendor to reject a new order?
 
@@ -36,19 +47,24 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 - **FR-002**: The system MUST provide dedicated web panels for `vendor admin` and `courier` roles.
 - **FR-003**: Customers MUST be able to choose between "delivery" and "pickup" at checkout.
 - **FR-004**: The system MUST provide a real-time order tracking page for customers.
-- **FR-005**: Couriers MUST be able to share their location in real-time while actively on a delivery.
+- **FR-005**: Couriers MUST share their location every 15 seconds while the app is in the foreground. When the app is not active, a manual "check-in" button MUST be available.
 - **FR-006**: For the MVP, the system MUST only support "cash on delivery" and "pay on pickup" payment methods.
 - **FR-007**: The application MUST be a Progressive Web App (PWA) and not a native iOS/Android application.
-- **FR-008**: The system MUST use Web Push (VAPID) for notifications and display appropriate permission warnings on iOS.
+- **FR-008**: The system MUST use Web Push (VAPID) for notifications. For the MVP, email will be the only fallback mechanism.
 - **FR-009**: All map and address-related features MUST use MapLibre and OpenStreetMap, with address searches proxied through the server.
 - **FR-010**: The system MUST implement a state machine to manage order statuses throughout the entire lifecycle.
+- **FR-011**: The system MUST support a hierarchical address structure of `City > District > Neighborhood`.
+- **FR-012**: Vendor branches MUST be able to define their delivery zones using a GeoJSON Polygon or MultiPolygon.
+- **FR-013**: The system MUST include a manual KYC (Know Your Customer) process for vendor verification, requiring document uploads and admin approval.
 
 ### Key Entities *(include if feature involves data)*
 - **User**: Represents an actor in the system with an assigned role (`customer`, `vendor admin`, `courier`, `admin`).
-- **Order**: Represents a customer's request, containing a list of items, delivery/pickup choice, status, and associated user/courier.
-- **Vendor**: Represents a business with a menu of products that customers can order from.
-- **Courier**: Represents a user responsible for delivering orders.
+- **Vendor**: Represents a business entity, which undergoes a manual verification process (KYC) including `tax_no` and document checks.
+- **Branch**: Represents a physical location of a Vendor, with its own address and an optional `delivery_zone_geojson`.
+- **Courier**: Represents a user responsible for delivering orders for a specific Vendor.
+- **Order**: Represents a customer's request, containing items, delivery/pickup choice, status, and a delivery address stored as `address_text` and a `geo_point`.
 - **Menu Item**: Represents a single product offered by a Vendor.
+- **City, District, Neighborhood**: Represents the hierarchical geographical data for addresses.
 
 ### Technical Constraints
 - **TC-001**: The frontend and backend MUST be built as a monolithic application using Next.js 15.
@@ -67,7 +83,7 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 - [X] All mandatory sections completed.
 
 ### Requirement Completeness
-- [ ] No [NEEDS CLARIFICATION] markers remain.
+- [X] No [NEEDS CLARIFICATION] markers remain.
 - [X] Requirements are testable and unambiguous.
 - [X] Success criteria are measurable.
 - [X] Scope is clearly bounded.

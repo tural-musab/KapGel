@@ -1,10 +1,12 @@
 import { createClient } from 'lib/supabase/server';
 import { cookies } from 'next/headers';
 
+import type { ComponentProps } from 'react';
+
 // TODO: Replace with shadcn/ui components
-const Select = ({ children, ...props }) => <select {...props}>{children}</select>;
-const Input = (props) => <input {...props} />;
-const Card = ({ children, ...props }) => <div {...props}>{children}</div>;
+const Select = (props: ComponentProps<'select'>) => <select {...props} />;
+const Input = (props: ComponentProps<'input'>) => <input {...props} />;
+const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 
 export default async function Home() {
   const cookieStore = cookies();

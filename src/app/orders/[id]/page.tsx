@@ -1,8 +1,10 @@
 import { createClient } from 'lib/supabase/server';
 import { cookies } from 'next/headers';
 
+import type { ComponentProps } from 'react';
+
 // TODO: Replace with shadcn/ui components
-const Card = ({ children, ...props }) => <div {...props}>{children}</div>;
+const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 
 export default async function OrderTrackingPage({ params }) {
   const cookieStore = cookies();

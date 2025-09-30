@@ -2,11 +2,13 @@
 
 import { useCartStore } from 'lib/cart-store';
 
+import type { ComponentProps } from 'react';
+
 // TODO: Replace with shadcn/ui components
-const Card = ({ children, ...props }) => <div {...props}>{children}</div>;
-const Button = ({ children, ...props }) => <button {...props}>{children}</button>;
-const Input = (props) => <input {...props} />;
-const Label = (props) => <label {...props} />;
+const Card = (props: ComponentProps<'div'>) => <div {...props} />;
+const Button = (props: ComponentProps<'button'>) => <button {...props} />;
+const Input = (props: ComponentProps<'input'>) => <input {...props} />;
+const Label = (props: ComponentProps<'label'>) => <label {...props} />;
 
 export default function CheckoutPage() {
   const { items, removeItem, clearCart } = useCartStore();

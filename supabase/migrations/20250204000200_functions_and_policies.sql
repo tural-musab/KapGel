@@ -24,13 +24,28 @@ as $$
 declare
   new_order public.orders;
   inserted_items jsonb := '[]'::jsonb;
-  order_items_total numeric := coalesce((order_input->>'items_total')::numeric, 0);
-  order_total numeric := coalesce((order_input->>'total')::numeric, 0);
-  order_delivery_fee numeric := coalesce((order_input->>'delivery_fee')::numeric, 0);
+  order_items_total numeric := nullif(order_input->>'items_total', '')::numeric;
+  order_total numeric := nullif(order_input->>'total', '')::numeric;
+  order_delivery_fee numeric := coalesce(nullif(order_input->>'delivery_fee', '')::numeric, 0);
   requested_customer_id uuid := nullif(order_input->>'customer_id', '')::uuid;
   authenticated_customer_id uuid := auth.uid();
   caller_role text := public.get_my_role();
   sanitized_courier_id uuid := null;
+  sanitized_branch_id uuid := nullif(order_input->>'branch_id', '')::uuid;
+  branch_vendor_id uuid;
+  courier_vendor_id uuid;
+  calculated_items_total numeric := 0;
+  calculated_order_total numeric := 0;
+  sanitized_payment_method public.payment_method;
+  sanitized_order_type public.order_type;
+  sanitized_address text := nullif(order_input->>'address_text', '');
+  sanitized_geo geography := null;
+  item_record jsonb;
+  item_unit_price numeric;
+  item_qty integer;
+  item_total numeric;
+  provided_item_total numeric;
+  mismatch_tolerance numeric := 0.01;
 begin
   if order_input is null then
     raise exception 'order_input cannot be null';
@@ -47,6 +62,80 @@ begin
   if requested_customer_id is not null and requested_customer_id <> authenticated_customer_id then
     raise exception 'customer_id mismatch between payload and auth context';
   end if;
+
+  if sanitized_branch_id is null then
+    raise exception 'branch_id is required to create order';
+  end if;
+
+  select vendor_id into branch_vendor_id from public.branches where id = sanitized_branch_id;
+
+  if branch_vendor_id is null then
+    raise exception 'Invalid branch_id supplied';
+  end if;
+
+  if sanitized_address is null then
+    raise exception 'address_text is required';
+  end if;
+
+  if nullif(order_input->>'payment_method', '') is null then
+    raise exception 'payment_method is required';
+  end if;
+
+  sanitized_payment_method := (order_input->>'payment_method')::public.payment_method;
+
+  if nullif(order_input->>'type', '') is null then
+    raise exception 'type is required';
+  end if;
+
+  sanitized_order_type := (order_input->>'type')::public.order_type;
+
+  if order_delivery_fee < 0 then
+    raise exception 'delivery_fee cannot be negative';
+  end if;
+
+  for item_record in
+    select value from jsonb_array_elements(items_input) as item(value)
+  loop
+    if nullif(item_record->>'product_id', '') is null then
+      raise exception 'Each order item must include product_id';
+    end if;
+
+    item_unit_price := (item_record->>'unit_price')::numeric;
+    item_qty := (item_record->>'qty')::integer;
+
+    if item_unit_price < 0 then
+      raise exception 'Item unit_price cannot be negative';
+    end if;
+
+    if item_qty <= 0 then
+      raise exception 'Item qty must be greater than zero';
+    end if;
+
+    item_total := item_unit_price * item_qty;
+
+    if item_record ? 'total' then
+      provided_item_total := (item_record->>'total')::numeric;
+
+      if abs(provided_item_total - item_total) > mismatch_tolerance then
+        raise exception 'Item total does not match unit_price * qty';
+      end if;
+    end if;
+
+    calculated_items_total := calculated_items_total + item_total;
+  end loop;
+
+  if calculated_items_total <= 0 then
+    raise exception 'Order must contain at least one item with a positive total';
+  end if;
+
+  order_items_total := calculated_items_total;
+  calculated_order_total := calculated_items_total + order_delivery_fee;
+
+  if order_total is not null and abs(order_total - calculated_order_total) > mismatch_tolerance then
+    raise exception 'Order total must equal items_total + delivery_fee';
+  end if;
+
+  order_total := calculated_order_total;
 
   if caller_role is null then
     raise exception 'Unable to determine caller role';
@@ -66,6 +155,22 @@ begin
     sanitized_courier_id := null;
   end if;
 
+  if sanitized_courier_id is not null then
+    select vendor_id into courier_vendor_id from public.couriers where id = sanitized_courier_id;
+
+    if courier_vendor_id is null then
+      raise exception 'Courier does not exist';
+    end if;
+
+    if courier_vendor_id <> branch_vendor_id then
+      raise exception 'Courier does not belong to branch vendor';
+    end if;
+  end if;
+
+  if nullif(order_input->>'geo_point', '') is not null then
+    sanitized_geo := nullif(order_input->>'geo_point', '')::geography;
+  end if;
+
   insert into public.orders (
     customer_id,
     branch_id,
@@ -80,18 +185,15 @@ begin
   )
   values (
     authenticated_customer_id,
-    (order_input->>'branch_id')::uuid,
+    sanitized_branch_id,
     sanitized_courier_id,
-    order_input->>'address_text',
-    case
-      when nullif(order_input->>'geo_point', '') is null then null
-      else nullif(order_input->>'geo_point', '')::geography
-    end,
-    (order_input->>'payment_method')::public.payment_method,
+    sanitized_address,
+    sanitized_geo,
+    sanitized_payment_method,
     order_items_total,
     order_delivery_fee,
     order_total,
-    (order_input->>'type')::public.order_type
+    sanitized_order_type
   )
   returning * into new_order;
 

@@ -181,13 +181,28 @@ AS $$
 DECLARE
   new_order public.orders;
   inserted_items jsonb := '[]'::jsonb;
-  order_items_total numeric := coalesce((order_input->>'items_total')::numeric, 0);
-  order_total numeric := coalesce((order_input->>'total')::numeric, 0);
-  order_delivery_fee numeric := coalesce((order_input->>'delivery_fee')::numeric, 0);
+  order_items_total numeric := nullif(order_input->>'items_total', '')::numeric;
+  order_total numeric := nullif(order_input->>'total', '')::numeric;
+  order_delivery_fee numeric := coalesce(nullif(order_input->>'delivery_fee', '')::numeric, 0);
   requested_customer_id uuid := nullif(order_input->>'customer_id', '')::uuid;
   authenticated_customer_id uuid := auth.uid();
   caller_role text := public.get_my_role();
   sanitized_courier_id uuid := null;
+  sanitized_branch_id uuid := nullif(order_input->>'branch_id', '')::uuid;
+  branch_vendor_id uuid;
+  courier_vendor_id uuid;
+  calculated_items_total numeric := 0;
+  calculated_order_total numeric := 0;
+  sanitized_payment_method public.payment_method;
+  sanitized_order_type public.order_type;
+  sanitized_address text := nullif(order_input->>'address_text', '');
+  sanitized_geo geography := NULL;
+  item_record jsonb;
+  item_unit_price numeric;
+  item_qty integer;
+  item_total numeric;
+  provided_item_total numeric;
+  mismatch_tolerance numeric := 0.01;
 BEGIN
   IF order_input IS NULL THEN
     RAISE EXCEPTION 'order_input cannot be null';
@@ -204,6 +219,80 @@ BEGIN
   IF requested_customer_id IS NOT NULL AND requested_customer_id <> authenticated_customer_id THEN
     RAISE EXCEPTION 'customer_id mismatch between payload and auth context';
   END IF;
+
+  IF sanitized_branch_id IS NULL THEN
+    RAISE EXCEPTION 'branch_id is required to create order';
+  END IF;
+
+  SELECT vendor_id INTO branch_vendor_id FROM public.branches WHERE id = sanitized_branch_id;
+
+  IF branch_vendor_id IS NULL THEN
+    RAISE EXCEPTION 'Invalid branch_id supplied';
+  END IF;
+
+  IF sanitized_address IS NULL THEN
+    RAISE EXCEPTION 'address_text is required';
+  END IF;
+
+  IF nullif(order_input->>'payment_method', '') IS NULL THEN
+    RAISE EXCEPTION 'payment_method is required';
+  END IF;
+
+  sanitized_payment_method := (order_input->>'payment_method')::public.payment_method;
+
+  IF nullif(order_input->>'type', '') IS NULL THEN
+    RAISE EXCEPTION 'type is required';
+  END IF;
+
+  sanitized_order_type := (order_input->>'type')::public.order_type;
+
+  IF order_delivery_fee < 0 THEN
+    RAISE EXCEPTION 'delivery_fee cannot be negative';
+  END IF;
+
+  FOR item_record IN
+    SELECT value FROM jsonb_array_elements(items_input) AS item(value)
+  LOOP
+    IF nullif(item_record->>'product_id', '') IS NULL THEN
+      RAISE EXCEPTION 'Each order item must include product_id';
+    END IF;
+
+    item_unit_price := (item_record->>'unit_price')::numeric;
+    item_qty := (item_record->>'qty')::integer;
+
+    IF item_unit_price < 0 THEN
+      RAISE EXCEPTION 'Item unit_price cannot be negative';
+    END IF;
+
+    IF item_qty <= 0 THEN
+      RAISE EXCEPTION 'Item qty must be greater than zero';
+    END IF;
+
+    item_total := item_unit_price * item_qty;
+
+    IF item_record ? 'total' THEN
+      provided_item_total := (item_record->>'total')::numeric;
+
+      IF abs(provided_item_total - item_total) > mismatch_tolerance THEN
+        RAISE EXCEPTION 'Item total does not match unit_price * qty';
+      END IF;
+    END IF;
+
+    calculated_items_total := calculated_items_total + item_total;
+  END LOOP;
+
+  IF calculated_items_total <= 0 THEN
+    RAISE EXCEPTION 'Order must contain at least one item with a positive total';
+  END IF;
+
+  order_items_total := calculated_items_total;
+  calculated_order_total := calculated_items_total + order_delivery_fee;
+
+  IF order_total IS NOT NULL AND abs(order_total - calculated_order_total) > mismatch_tolerance THEN
+    RAISE EXCEPTION 'Order total must equal items_total + delivery_fee';
+  END IF;
+
+  order_total := calculated_order_total;
 
   IF caller_role IS NULL THEN
     RAISE EXCEPTION 'Unable to determine caller role';
@@ -223,6 +312,22 @@ BEGIN
     sanitized_courier_id := NULL;
   END IF;
 
+  IF sanitized_courier_id IS NOT NULL THEN
+    SELECT vendor_id INTO courier_vendor_id FROM public.couriers WHERE id = sanitized_courier_id;
+
+    IF courier_vendor_id IS NULL THEN
+      RAISE EXCEPTION 'Courier does not exist';
+    END IF;
+
+    IF courier_vendor_id <> branch_vendor_id THEN
+      RAISE EXCEPTION 'Courier does not belong to branch vendor';
+    END IF;
+  END IF;
+
+  IF nullif(order_input->>'geo_point', '') IS NOT NULL THEN
+    sanitized_geo := nullif(order_input->>'geo_point', '')::geography;
+  END IF;
+
   INSERT INTO public.orders (
     customer_id,
     branch_id,
@@ -237,18 +342,15 @@ BEGIN
   )
   VALUES (
     authenticated_customer_id,
-    (order_input->>'branch_id')::uuid,
+    sanitized_branch_id,
     sanitized_courier_id,
-    order_input->>'address_text',
-    CASE
-      WHEN nullif(order_input->>'geo_point', '') IS NULL THEN NULL
-      ELSE nullif(order_input->>'geo_point', '')::geography
-    END,
-    (order_input->>'payment_method')::public.payment_method,
+    sanitized_address,
+    sanitized_geo,
+    sanitized_payment_method,
     order_items_total,
     order_delivery_fee,
     order_total,
-    (order_input->>'type')::public.order_type
+    sanitized_order_type
   )
   RETURNING * INTO new_order;
 

@@ -15,7 +15,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
 ## 🧱 Tech Stack
 
 - **Framework**: Next.js 15 (App Router) + TypeScript 5 + Tailwind CSS + shadcn/ui.
-- **Backend/Data**: Supabase Postgres (SQL migrations via Supabase CLI) with Drizzle ORM for type inference, PostGIS for geospatial features.
+- **Backend/Data**: Supabase Postgres (migrations via Supabase CLI) with PostGIS for geospatial features and lightweight TypeScript stubs for IDE hints.
 - **Realtime**: Supabase Realtime channels for orders and courier telemetry.
 - **State Management**: Zustand for cart/session; React Query planned for dashboard data fetching.
 - **Testing**: Vitest (unit) and Playwright (end-to-end) with accessibility checks via Axe.
@@ -57,7 +57,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
    supabase db push
    pnpm db:seed
    ```
-   The SQL files in `db/` (schema, migrations, RLS) are the single source of truth; use the Supabase CLI workflow (`supabase db push` or `pnpm db:push`) to apply changes.
+   Supabase migrations now live in `supabase/migrations/`. The SQL support files under `db/` (schema snapshot, RLS helpers, seeds, and the read-only `schema.ts` type stubs) should be kept in sync by running the Supabase CLI workflow above.
 4. **Run the App**
    ```bash
    pnpm dev
@@ -76,7 +76,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
 
 A CI workflow (`.github/workflows/ci.yml`) is pending (see `tasks.md` T008).
 
-The CI pipeline uses the Supabase CLI to push schema changes; when you add migrations under `db/`, ensure the same `supabase db push` step continues to pass.
+The CI pipeline uses the Supabase CLI to push schema changes; when you add migrations under `supabase/migrations/`, ensure the same `supabase db push` step continues to pass.
 
 ## 🗂️ Repository Map
 
@@ -85,6 +85,8 @@ src/
 ├── app/               # App Router routes per role (customer, vendor, courier, admin)
 ├── components/        # Shared UI components (Map, PushManager, InstallPWA)
 ├── lib/               # Client/server utilities (Supabase, RBAC, stores)
+├── db/                # Schema snapshot, seeds, RLS helpers, and read-only TypeScript types
+├── supabase/migrations/ # Supabase CLI migrations (source of truth for schema changes)
 ├── workers/           # Service worker entry point
 ├── tests/             # Playwright + Vitest suites
 └── specs/001-kapsam-roller-m/

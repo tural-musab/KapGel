@@ -83,6 +83,30 @@ describe('POST /api/orders', () => {
     });
   });
 
+  it('returns the payload from Supabase with the newly created order and items', async () => {
+    const supabasePayload = {
+      order: {
+        id: 'order-1',
+        customer_id: 'user-1',
+      },
+      items: [
+        {
+          id: 'order-item-1',
+          order_id: 'order-1',
+          product_id: 'item-1',
+          qty: 2,
+        },
+      ],
+    };
+
+    rpcMock.mockResolvedValue({ data: supabasePayload, error: null });
+
+    const response = await POST(buildRequest(basePayload));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(supabasePayload);
+  });
+
   it('returns 500 when RPC fails and surfaces an error message', async () => {
     rpcMock.mockResolvedValue({
       data: null,
@@ -92,6 +116,6 @@ describe('POST /api/orders', () => {
     const response = await POST(buildRequest(basePayload));
 
     expect(response.status).toBe(500);
-    await expect(response.text()).resolves.toBe('Failed to create order');
+    await expect(response.text()).resolves.toBe('transaction failed');
   });
 });

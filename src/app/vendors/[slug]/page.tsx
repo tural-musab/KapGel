@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 const Card = ({ children, ...props }) => <div {...props}>{children}</div>;
 const Button = ({ children, ...props }) => <button {...props}>{children}</button>;
 
-export default async function VendorMenuPage({ params }: { params: { slug: string } }) {
+export default async function VendorMenuPage({ params }) {
   const cookieStore = cookies();
   const supabase = createClient();
 

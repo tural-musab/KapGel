@@ -1,168 +1,204 @@
-import { pgTable, uuid, text, boolean, integer, numeric, jsonb, timestamp, pgEnum, serial, customType } from 'drizzle-orm/pg-core';
-
 /**
- * Drizzle models are retained purely for type inference – Supabase SQL files under `db/`
- * remain the canonical source of truth for the schema.
+ * Canonical database schema lives in the SQL migrations under `supabase/migrations/`.
+ *
+ * This TypeScript module is intentionally maintained as a read-only helper for
+ * IDE autocomplete and type inference when writing Supabase queries. Update the
+ * shapes below after running `supabase db push` or generating fresh TypeScript
+ * types with `supabase gen types typescript --linked`. Do not import runtime
+ * libraries here.
  */
 
-const geographyPoint = customType<{ data: string; driverData: string }>({
-  dataType() {
-    return 'geography(point,4326)';
-  },
-});
+export type UUID = string;
+export type ISODateString = string; // e.g. `2025-02-04T12:00:00Z`
+export type NumericString = string; // preserves precision for NUMERIC columns
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  role: text('role').notNull(), // 'customer', 'vendor_admin', 'courier', 'admin'
-  phone: text('phone').unique(),
-  email: text('email').unique(),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export type OrderType = 'delivery' | 'pickup';
+export type OrderStatus =
+  | 'NEW'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'PICKED_UP'
+  | 'ON_ROUTE'
+  | 'DELIVERED'
+  | 'REJECTED'
+  | 'CANCELED_BY_USER'
+  | 'CANCELED_BY_VENDOR';
+export type PaymentMethod = 'cash' | 'card_on_pickup';
+export type NotificationChannel = 'webpush' | 'email' | 'sms';
+export type PlanType = 'fixed' | 'revenue_target';
 
-export const vendors = pgTable('vendors', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  taxNo: text('tax_no'),
-  ownerUserId: uuid('owner_user_id').references(() => users.id),
-  isPickupEnabled: boolean('is_pickup_enabled').default(false),
-  hasOwnCouriers: boolean('has_own_couriers').default(false),
-  verified: boolean('verified').default(false),
-});
+export type GeographyPoint = string; // WKT or GeoJSON text handled via PostGIS
 
-export const branches = pgTable('branches', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  phone: text('phone'),
-  addressText: text('address_text'),
-  geoPoint: geographyPoint('geo_point'),
-  deliveryZoneGeojson: jsonb('delivery_zone_geojson'),
-});
+export interface UsersRow {
+  id: UUID;
+  role: 'customer' | 'vendor_admin' | 'courier' | 'admin';
+  phone: string | null;
+  email: string | null;
+  created_at: ISODateString | null;
+}
 
-export const couriers = pgTable('couriers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  isActive: boolean('is_active').default(true),
-  vehicleType: text('vehicle_type'),
-  shiftStatus: text('shift_status').default('offline'), // 'online', 'offline'
-});
+export interface VendorsRow {
+  id: UUID;
+  name: string;
+  tax_no: string | null;
+  owner_user_id: UUID | null;
+  is_pickup_enabled: boolean | null;
+  has_own_couriers: boolean | null;
+  verified: boolean | null;
+}
 
-export const categories = pgTable('categories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  isActive: boolean('is_active').default(true),
-  sort: integer('sort'),
-});
+export interface BranchesRow {
+  id: UUID;
+  vendor_id: UUID | null;
+  name: string;
+  phone: string | null;
+  address_text: string | null;
+  geo_point: GeographyPoint | null;
+  delivery_zone_geojson: Record<string, unknown> | null;
+}
 
-export const products = pgTable('products', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
-  name: text('name').notNull(),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').default('TRY'),
-  isActive: boolean('is_active').default(true),
-  photoUrl: text('photo_url'),
-});
+export interface CouriersRow {
+  id: UUID;
+  vendor_id: UUID | null;
+  user_id: UUID | null;
+  is_active: boolean | null;
+  vehicle_type: string | null;
+  shift_status: 'online' | 'offline' | null;
+}
 
-export const inventories = pgTable('inventories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  branchId: uuid('branch_id').references(() => branches.id, { onDelete: 'cascade' }),
-  productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }),
-  stockPolicy: text('stock_policy').default('infinite'), // 'infinite', 'finite'
-  qty: integer('qty'),
-});
+export interface CategoriesRow {
+  id: UUID;
+  vendor_id: UUID | null;
+  name: string;
+  is_active: boolean | null;
+  sort: number | null;
+}
 
-export const orderTypeEnum = pgEnum('order_type', ['delivery', 'pickup']);
-export const orderStatusEnum = pgEnum('order_status', ['NEW', 'CONFIRMED', 'PREPARING', 'PICKED_UP', 'ON_ROUTE', 'DELIVERED', 'REJECTED', 'CANCELED_BY_USER', 'CANCELED_BY_VENDOR']);
-export const paymentMethodEnum = pgEnum('payment_method', ['cash', 'card_on_pickup']);
+export interface ProductsRow {
+  id: UUID;
+  vendor_id: UUID | null;
+  category_id: UUID | null;
+  name: string;
+  price: NumericString;
+  currency: string | null;
+  is_active: boolean | null;
+  photo_url: string | null;
+}
 
-export const orders = pgTable('orders', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  customerId: uuid('customer_id').references(() => users.id),
-  branchId: uuid('branch_id').references(() => branches.id),
-  courierId: uuid('courier_id').references(() => couriers.id),
-  type: orderTypeEnum('type').notNull(),
-  addressText: text('address_text'),
-  geoPoint: geographyPoint('geo_point'),
-  status: orderStatusEnum('status').default('NEW'),
-  itemsTotal: numeric('items_total', { precision: 10, scale: 2 }).notNull(),
-  deliveryFee: numeric('delivery_fee', { precision: 10, scale: 2 }).default('0'),
-  total: numeric('total', { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: paymentMethodEnum('payment_method').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export interface InventoriesRow {
+  id: UUID;
+  branch_id: UUID | null;
+  product_id: UUID | null;
+  stock_policy: 'infinite' | 'finite' | null;
+  qty: number | null;
+}
 
-export const orderItems = pgTable('order_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'cascade' }),
-  productId: uuid('product_id').references(() => products.id),
-  nameSnapshot: text('name_snapshot').notNull(),
-  unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
-  qty: integer('qty').notNull(),
-  total: numeric('total', { precision: 10, scale: 2 }).notNull(),
-});
+export interface OrdersRow {
+  id: UUID;
+  customer_id: UUID | null;
+  branch_id: UUID | null;
+  courier_id: UUID | null;
+  type: OrderType;
+  address_text: string | null;
+  geo_point: GeographyPoint | null;
+  status: OrderStatus | null;
+  items_total: NumericString;
+  delivery_fee: NumericString | null;
+  total: NumericString;
+  payment_method: PaymentMethod;
+  created_at: ISODateString | null;
+}
 
-export const events = pgTable('events', {
-  id: serial('id').primaryKey(),
-  orderId: uuid('order_id').references(() => orders.id),
-  type: text('type').notNull(),
-  payloadJson: jsonb('payload_json'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export interface OrderItemsRow {
+  id: UUID;
+  order_id: UUID | null;
+  product_id: UUID | null;
+  name_snapshot: string;
+  unit_price: NumericString;
+  qty: number;
+  total: NumericString;
+}
 
-export const notificationChannelEnum = pgEnum('notification_channel', ['webpush', 'email', 'sms']);
+export interface EventsRow {
+  id: number;
+  order_id: UUID | null;
+  type: string;
+  payload_json: Record<string, unknown> | null;
+  created_at: ISODateString | null;
+}
 
-export const notifications = pgTable('notifications', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  channel: notificationChannelEnum('channel').notNull(),
-  tokenOrAddr: text('token_or_addr').notNull(),
-  isActive: boolean('is_active').default(true),
-});
+export interface NotificationsRow {
+  id: UUID;
+  user_id: UUID | null;
+  channel: NotificationChannel;
+  token_or_addr: string;
+  is_active: boolean | null;
+}
 
-export const planTypeEnum = pgEnum('plan_type', ['fixed', 'revenue_target']);
+export interface PlansRow {
+  id: UUID;
+  name: string;
+  type: PlanType;
+  price_monthly: NumericString | null;
+  revenue_threshold: NumericString | null;
+}
 
-export const plans = pgTable('plans', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  type: planTypeEnum('type').notNull(),
-  priceMonthly: numeric('price_monthly', { precision: 10, scale: 2 }),
-  revenueThreshold: numeric('revenue_threshold', { precision: 10, scale: 2 }),
-});
+export interface SubscriptionsRow {
+  id: UUID;
+  vendor_id: UUID | null;
+  plan_id: UUID | null;
+  status: string | null;
+  period_start: ISODateString | null;
+  period_end: ISODateString | null;
+}
 
-export const subscriptions = pgTable('subscriptions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  planId: uuid('plan_id').references(() => plans.id),
-  status: text('status'),
-  periodStart: timestamp('period_start'),
-  periodEnd: timestamp('period_end'),
-});
+export interface CourierLocationsRow {
+  id: number;
+  courier_id: UUID | null;
+  order_id: UUID | null;
+  position: GeographyPoint;
+  updated_at: ISODateString | null;
+}
 
-export const courierLocations = pgTable('courier_locations', {
-  id: serial('id').primaryKey(),
-  courierId: uuid('courier_id').references(() => couriers.id, { onDelete: 'cascade' }),
-  orderId: uuid('order_id').references(() => orders.id),
-  position: geographyPoint('position').notNull(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
+export interface CitiesRow {
+  id: number;
+  name: string;
+}
 
-export const cities = pgTable('cities', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-});
+export interface DistrictsRow {
+  id: number;
+  city_id: number | null;
+  name: string;
+}
 
-export const districts = pgTable('districts', {
-  id: serial('id').primaryKey(),
-  cityId: integer('city_id').references(() => cities.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-});
+export interface NeighborhoodsRow {
+  id: number;
+  district_id: number | null;
+  name: string;
+}
 
-export const neighborhoods = pgTable('neighborhoods', {
-  id: serial('id').primaryKey(),
-  districtId: integer('district_id').references(() => districts.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-});
+export interface DatabaseTables {
+  users: UsersRow;
+  vendors: VendorsRow;
+  branches: BranchesRow;
+  couriers: CouriersRow;
+  categories: CategoriesRow;
+  products: ProductsRow;
+  inventories: InventoriesRow;
+  orders: OrdersRow;
+  order_items: OrderItemsRow;
+  events: EventsRow;
+  notifications: NotificationsRow;
+  plans: PlansRow;
+  subscriptions: SubscriptionsRow;
+  courier_locations: CourierLocationsRow;
+  cities: CitiesRow;
+  districts: DistrictsRow;
+  neighborhoods: NeighborhoodsRow;
+}
+
+export interface Database {
+  public: {
+    Tables: DatabaseTables;
+  };
+}

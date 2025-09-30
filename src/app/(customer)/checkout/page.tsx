@@ -69,7 +69,7 @@ export default function CheckoutPage() {
                 </Label>
                 <Label className="flex items-center gap-2">
                   <Input type="radio" name="payment" value="card_on_pickup" />
-                  Gel-Al'da Kart
+                  Gel-Al&apos;da Kart
                 </Label>
               </div>
             </div>

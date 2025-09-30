@@ -1,10 +1,12 @@
 import { createClient } from 'lib/supabase/server';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const cookieStore = cookies();
   const supabase = createClient();
+
+  if (!supabase) {
+    return new NextResponse('Supabase is not configured', { status: 500 });
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
 

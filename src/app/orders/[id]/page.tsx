@@ -1,20 +1,45 @@
 import { createClient } from 'lib/supabase/server';
-import { cookies } from 'next/headers';
 
 import type { ComponentProps } from 'react';
+
+type OrderItem = {
+  id: string;
+  qty: number;
+  unit_price: number;
+  products: {
+    name: string;
+  } | null;
+};
+
+type Order = {
+  id: string;
+  status: string;
+  total: number;
+  order_items: OrderItem[] | null;
+};
 
 // TODO: Replace with shadcn/ui components
 const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 
-export default async function OrderTrackingPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies();
+export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
+
+  if (!supabase) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-center text-sm text-gray-500">
+          Supabase yapılandırması bulunamadığı için sipariş bilgilerine ulaşılamıyor.
+        </p>
+      </div>
+    );
+  }
 
   const { data: order } = await supabase
     .from('orders')
     .select('*, order_items(*, products(*))')
-    .eq('id', params.id)
-    .single();
+    .eq('id', id)
+    .single<Order>();
 
   if (!order) {
     return <div>Order not found</div>;
@@ -36,11 +61,13 @@ export default async function OrderTrackingPage({ params }: { params: { id: stri
         <Card className="border rounded-lg p-4 mt-8">
           <h2 className="text-2xl font-semibold mb-4">Sipariş Detayları</h2>
           <ul>
-            {order.order_items.map((item) => (
+            {order.order_items?.map((item) => (
               <li key={item.id} className="flex justify-between items-center mb-2">
                 <div>
-                  <p className="font-bold">{item.products.name}</p>
-                  <p>{item.qty} x {item.unit_price} TL</p>
+                  <p className="font-bold">{item.products?.name}</p>
+                  <p>
+                    {item.qty} x {item.unit_price} TL
+                  </p>
                 </div>
               </li>
             ))}

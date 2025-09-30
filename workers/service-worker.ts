@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-declare const self: ServiceWorkerGlobalScope;
+const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE_NAME = 'kapgel-cache-v1';
 const PRECACHE_URLS = [
@@ -8,15 +8,15 @@ const PRECACHE_URLS = [
   '/offline.html',
 ];
 
-self.addEventListener('install', (event) => {
+sw.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
+      .then(() => sw.skipWaiting())
   );
 });
 
-self.addEventListener('activate', (event) => {
+sw.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -27,11 +27,11 @@ self.addEventListener('activate', (event) => {
         })
       );
     })
-    .then(() => self.clients.claim())
+    .then(() => sw.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (event) => {
+sw.addEventListener('fetch', (event) => {
   const { request } = event;
 
   if (request.url.includes('/api/')) {

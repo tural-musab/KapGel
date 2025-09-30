@@ -1,5 +1,4 @@
 import { createClient } from 'lib/supabase/server';
-import { cookies } from 'next/headers';
 
 import type { ComponentProps } from 'react';
 
@@ -9,8 +8,22 @@ const Input = (props: ComponentProps<'input'>) => <input {...props} />;
 const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 
 export default async function Home() {
-  const cookieStore = cookies();
   const supabase = createClient();
+
+  if (!supabase) {
+    return (
+      <div className="container mx-auto p-4">
+        <header className="text-center my-8">
+          <h1 className="text-4xl font-bold">Kapgel</h1>
+          <p className="text-lg text-gray-600">Gönder Gelsin</p>
+        </header>
+
+        <p className="text-center text-sm text-gray-500">
+          Supabase yapılandırması bulunamadığı için canlı veriler gösterilemiyor.
+        </p>
+      </div>
+    );
+  }
 
   const { data: cities } = await supabase.from('cities').select('*');
   const { data: vendors } = await supabase.from('vendors').select('*').limit(10);

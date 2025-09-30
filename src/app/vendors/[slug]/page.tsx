@@ -1,21 +1,49 @@
 import { createClient } from 'lib/supabase/server';
-import { cookies } from 'next/headers';
 
 import type { ComponentProps } from 'react';
+
+type VendorProduct = {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+};
+
+type VendorCategory = {
+  id: string;
+  name: string;
+  products: VendorProduct[];
+};
+
+type Vendor = {
+  id: string;
+  name: string;
+  categories: VendorCategory[] | null;
+};
 
 // TODO: Replace with shadcn/ui components
 const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 const Button = (props: ComponentProps<'button'>) => <button {...props} />;
 
-export default async function VendorMenuPage({ params }: { params: { slug: string } }) {
-  const cookieStore = cookies();
+export default async function VendorMenuPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = createClient();
+
+  if (!supabase) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-center text-sm text-gray-500">
+          Supabase yapılandırması bulunamadığı için işletme menüsü yüklenemiyor.
+        </p>
+      </div>
+    );
+  }
 
   const { data: vendor } = await supabase
     .from('vendors')
     .select('*, categories(*, products(*))')
-    .eq('id', params.slug) // Assuming slug is the vendor ID for now
-    .single();
+    .eq('id', slug) // Assuming slug is the vendor ID for now
+    .single<Vendor>();
 
   if (!vendor) {
     return <div>Vendor not found</div>;
@@ -29,7 +57,7 @@ export default async function VendorMenuPage({ params }: { params: { slug: strin
       </header>
 
       <main>
-        {vendor.categories.map((category) => (
+        {vendor.categories?.map((category) => (
           <div key={category.id} className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{category.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

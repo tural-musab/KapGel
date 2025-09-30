@@ -4,13 +4,7 @@ import { cookies } from 'next/headers';
 // TODO: Replace with shadcn/ui components
 const Card = ({ children, ...props }) => <div {...props}>{children}</div>;
 
-interface OrderTrackingPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function OrderTrackingPage({ params }: OrderTrackingPageProps) {
+export default async function OrderTrackingPage({ params }) {
   const cookieStore = cookies();
   const supabase = createClient();
 

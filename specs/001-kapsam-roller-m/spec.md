@@ -149,7 +149,7 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 
 - **Application**: Next.js 15 App Router with Server Actions for mutations, React Server Components for data fetching.
 - **State Management**: Zustand store for cart and session caches; React Query (planned) for vendor dashboards.
-- **Backend Services**: Supabase Postgres with Drizzle ORM migrations (`db/`), row-level security enforced via policies.
+- **Backend Services**: Supabase Postgres with Supabase CLI-driven SQL migrations (`db/`) and Drizzle ORM for type inference, row-level security enforced via policies.
 - **Realtime**: Supabase Realtime for order status and courier location; fallback to polling when WebSocket unavailable.
 - **Maps**: MapLibre GL JS with custom tiles from OSM; geocoding proxied via Supabase Edge Function.
 - **Notifications**: Web Push using VAPID keys stored in Supabase secrets; email fallback via Supabase Functions + Resend (candidate).

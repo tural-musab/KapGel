@@ -154,3 +154,133 @@ CREATE TABLE neighborhoods (
     district_id INTEGER REFERENCES districts(id) ON DELETE CASCADE,
     name TEXT NOT NULL
 );
+
+-- Functions
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN (
+    SELECT role FROM public.users WHERE id = auth.uid()
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.create_order_with_items(
+  order_input jsonb,
+  items_input jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_order public.orders;
+  inserted_items jsonb := '[]'::jsonb;
+  order_items_total numeric := coalesce((order_input->>'items_total')::numeric, 0);
+  order_total numeric := coalesce((order_input->>'total')::numeric, 0);
+  order_delivery_fee numeric := coalesce((order_input->>'delivery_fee')::numeric, 0);
+  requested_customer_id uuid := nullif(order_input->>'customer_id', '')::uuid;
+  authenticated_customer_id uuid := auth.uid();
+  caller_role text := public.get_my_role();
+  sanitized_courier_id uuid := null;
+BEGIN
+  IF order_input IS NULL THEN
+    RAISE EXCEPTION 'order_input cannot be null';
+  END IF;
+
+  IF items_input IS NULL OR jsonb_typeof(items_input) <> 'array' OR jsonb_array_length(items_input) = 0 THEN
+    RAISE EXCEPTION 'items_input must be a non-empty array';
+  END IF;
+
+  IF authenticated_customer_id IS NULL THEN
+    RAISE EXCEPTION 'Authenticated user required to create order';
+  END IF;
+
+  IF requested_customer_id IS NOT NULL AND requested_customer_id <> authenticated_customer_id THEN
+    RAISE EXCEPTION 'customer_id mismatch between payload and auth context';
+  END IF;
+
+  IF caller_role IS NULL THEN
+    RAISE EXCEPTION 'Unable to determine caller role';
+  END IF;
+
+  IF caller_role = 'customer' THEN
+    IF nullif(order_input->>'courier_id', '') IS NOT NULL THEN
+      RAISE EXCEPTION 'Customers cannot assign courier_id';
+    END IF;
+    sanitized_courier_id := NULL;
+  ELSIF caller_role IN ('vendor_admin', 'admin') THEN
+    sanitized_courier_id := nullif(order_input->>'courier_id', '')::uuid;
+  ELSE
+    IF nullif(order_input->>'courier_id', '') IS NOT NULL THEN
+      RAISE EXCEPTION 'Role % cannot assign courier_id', caller_role;
+    END IF;
+    sanitized_courier_id := NULL;
+  END IF;
+
+  INSERT INTO public.orders (
+    customer_id,
+    branch_id,
+    courier_id,
+    address_text,
+    geo_point,
+    payment_method,
+    items_total,
+    delivery_fee,
+    total,
+    type
+  )
+  VALUES (
+    authenticated_customer_id,
+    (order_input->>'branch_id')::uuid,
+    sanitized_courier_id,
+    order_input->>'address_text',
+    CASE
+      WHEN nullif(order_input->>'geo_point', '') IS NULL THEN NULL
+      ELSE nullif(order_input->>'geo_point', '')::geography
+    END,
+    (order_input->>'payment_method')::public.payment_method,
+    order_items_total,
+    order_delivery_fee,
+    order_total,
+    (order_input->>'type')::public.order_type
+  )
+  RETURNING * INTO new_order;
+
+  WITH inserted AS (
+    INSERT INTO public.order_items (
+      order_id,
+      product_id,
+      name_snapshot,
+      unit_price,
+      qty,
+      total
+    )
+    SELECT
+      new_order.id,
+      (item->>'product_id')::uuid,
+      item->>'name_snapshot',
+      (item->>'unit_price')::numeric,
+      (item->>'qty')::integer,
+      (item->>'total')::numeric
+    FROM jsonb_array_elements(items_input) AS item
+    RETURNING *
+  )
+  SELECT coalesce(jsonb_agg(to_jsonb(inserted)), '[]'::jsonb)
+  INTO inserted_items
+  FROM inserted;
+
+  RETURN jsonb_build_object(
+    'order', to_jsonb(new_order),
+    'items', inserted_items
+  );
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE;
+END;
+$$;

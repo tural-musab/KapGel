@@ -14,10 +14,25 @@ export async function POST(request: Request) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  const { items, branchId, addressText, paymentMethod } = await request.json();
+  const {
+    items,
+    branchId,
+    addressText,
+    paymentMethod,
+    customerId,
+    courierId,
+  } = await request.json();
 
   if (!items || !branchId || !addressText || !paymentMethod) {
     return new NextResponse('Missing required fields', { status: 400 });
+  }
+
+  if (customerId && customerId !== user.id) {
+    return new NextResponse('Customer ID mismatch', { status: 403 });
+  }
+
+  if (courierId) {
+    return new NextResponse('Customers cannot assign courier', { status: 403 });
   }
 
   interface CartItem {

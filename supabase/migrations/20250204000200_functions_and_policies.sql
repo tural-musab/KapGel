@@ -27,6 +27,10 @@ declare
   order_items_total numeric := coalesce((order_input->>'items_total')::numeric, 0);
   order_total numeric := coalesce((order_input->>'total')::numeric, 0);
   order_delivery_fee numeric := coalesce((order_input->>'delivery_fee')::numeric, 0);
+  requested_customer_id uuid := nullif(order_input->>'customer_id', '')::uuid;
+  authenticated_customer_id uuid := auth.uid();
+  caller_role text := public.get_my_role();
+  sanitized_courier_id uuid := null;
 begin
   if order_input is null then
     raise exception 'order_input cannot be null';
@@ -34,6 +38,32 @@ begin
 
   if items_input is null or jsonb_typeof(items_input) <> 'array' or jsonb_array_length(items_input) = 0 then
     raise exception 'items_input must be a non-empty array';
+  end if;
+
+  if authenticated_customer_id is null then
+    raise exception 'Authenticated user required to create order';
+  end if;
+
+  if requested_customer_id is not null and requested_customer_id <> authenticated_customer_id then
+    raise exception 'customer_id mismatch between payload and auth context';
+  end if;
+
+  if caller_role is null then
+    raise exception 'Unable to determine caller role';
+  end if;
+
+  if caller_role = 'customer' then
+    if nullif(order_input->>'courier_id', '') is not null then
+      raise exception 'Customers cannot assign courier_id';
+    end if;
+    sanitized_courier_id := null;
+  elsif caller_role in ('vendor_admin', 'admin') then
+    sanitized_courier_id := nullif(order_input->>'courier_id', '')::uuid;
+  else
+    if nullif(order_input->>'courier_id', '') is not null then
+      raise exception 'Role % cannot assign courier_id', caller_role;
+    end if;
+    sanitized_courier_id := null;
   end if;
 
   insert into public.orders (
@@ -49,9 +79,9 @@ begin
     type
   )
   values (
-    (order_input->>'customer_id')::uuid,
+    authenticated_customer_id,
     (order_input->>'branch_id')::uuid,
-    nullif(order_input->>'courier_id', '')::uuid,
+    sanitized_courier_id,
     order_input->>'address_text',
     case
       when nullif(order_input->>'geo_point', '') is null then null

@@ -24,216 +24,275 @@ if (shouldSkip) {
     const vendorClient = createClient(supabaseUrl!, supabaseAnonKey!, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    const customerClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const runId = randomUUID();
     const otherVendorEmail = `other-admin-${runId}@example.com`;
     const customerEmail = `customer-${runId}@example.com`;
+    const customerPassword = `Customer-${runId}!Pass123`;
 
     let vendorUserId: string;
+    let customerUserId: string;
     let otherVendorBranchId: string;
     let otherVendorOrderId: string;
+    let otherVendorProductId: string;
     const createdUserIds: string[] = [];
     const createdVendorIds: string[] = [];
     const createdBranchIds: string[] = [];
     const createdOrderIds: string[] = [];
+    const createdProductIds: string[] = [];
+    const createdAuthUserIds: string[] = [];
 
     beforeAll(async () => {
-    // Ensure vendor test user exists and has proper role mapping
-    let signIn = await vendorClient.auth.signInWithPassword({
-      email: testVendorEmail!,
-      password: testVendorPassword!,
-    });
-
-    if (signIn.error) {
-      const { data, error } = await admin.auth.admin.createUser({
+      // Ensure vendor test user exists and has proper role mapping
+      let signIn = await vendorClient.auth.signInWithPassword({
         email: testVendorEmail!,
         password: testVendorPassword!,
+      });
+
+      if (signIn.error) {
+        const { data, error } = await admin.auth.admin.createUser({
+          email: testVendorEmail!,
+          password: testVendorPassword!,
+          email_confirm: true,
+        });
+
+        if (error || !data.user) {
+          throw new Error(`Failed to create test vendor user: ${error?.message}`);
+        }
+
+        vendorUserId = data.user.id;
+        createdUserIds.push(vendorUserId);
+        const { error: vendorUserInsertError } = await admin.from("users").insert({
+          id: vendorUserId,
+          email: testVendorEmail,
+          role: "vendor_admin",
+        });
+
+        if (vendorUserInsertError) {
+          throw new Error(`Failed to create users row for vendor admin: ${vendorUserInsertError.message}`);
+        }
+
+        signIn = await vendorClient.auth.signInWithPassword({
+          email: testVendorEmail!,
+          password: testVendorPassword!,
+        });
+
+        if (signIn.error || !signIn.data.user || !signIn.data.session) {
+          throw new Error(`Unable to sign in with test vendor user: ${signIn.error?.message}`);
+        }
+      } else if (!signIn.data.user || !signIn.data.session) {
+        throw new Error("Vendor sign-in did not return a valid session");
+      }
+
+      vendorUserId = signIn.data.user.id;
+
+      const { data: existingVendorUserRecord } = await admin
+        .from("users")
+        .select("id")
+        .eq("id", vendorUserId);
+
+      if (!existingVendorUserRecord || existingVendorUserRecord.length === 0) {
+        const { error: vendorUserRowInsertError } = await admin.from("users").insert({
+          id: vendorUserId,
+          email: testVendorEmail,
+          role: "vendor_admin",
+        });
+
+        if (vendorUserRowInsertError) {
+          throw new Error(`Failed to insert vendor admin mapping: ${vendorUserRowInsertError.message}`);
+        }
+        if (!createdUserIds.includes(vendorUserId)) {
+          createdUserIds.push(vendorUserId);
+        }
+      } else {
+        const { error: vendorUserUpdateError } = await admin
+          .from("users")
+          .update({ role: "vendor_admin", email: testVendorEmail })
+          .eq("id", vendorUserId);
+
+        if (vendorUserUpdateError) {
+          throw new Error(`Failed to sync vendor admin role: ${vendorUserUpdateError.message}`);
+        }
+      }
+
+      const { error: sessionError } = await vendorClient.auth.setSession(signIn.data.session);
+
+      if (sessionError) {
+        throw new Error(`Failed to establish vendor session: ${sessionError.message}`);
+      }
+
+      const { data: vendor, error: vendorInsertError } = await admin
+        .from("vendors")
+        .insert({
+          name: `Test Vendor ${runId}`,
+          owner_user_id: vendorUserId,
+          has_own_couriers: true,
+          verified: true,
+        })
+        .select()
+        .single();
+
+      if (vendorInsertError) {
+        throw new Error(`Failed to create vendor for test admin: ${vendorInsertError.message}`);
+      }
+
+      if (vendor) {
+        createdVendorIds.push(vendor.id);
+      }
+
+      const { data: otherVendorUser, error: otherVendorUserError } = await admin
+        .from("users")
+        .insert({ role: "vendor_admin", email: otherVendorEmail })
+        .select()
+        .single();
+
+      if (otherVendorUserError) {
+        throw new Error(`Failed to create other vendor admin user: ${otherVendorUserError.message}`);
+      }
+
+      if (!otherVendorUser) {
+        throw new Error("Failed to create other vendor admin user record");
+      }
+      createdUserIds.push(otherVendorUser.id);
+
+      const { data: otherVendor, error: otherVendorInsertError } = await admin
+        .from("vendors")
+        .insert({
+          name: `Other Vendor ${runId}`,
+          owner_user_id: otherVendorUser.id,
+          has_own_couriers: false,
+          verified: true,
+        })
+        .select()
+        .single();
+
+      if (otherVendorInsertError) {
+        throw new Error(`Failed to create other vendor: ${otherVendorInsertError.message}`);
+      }
+
+      if (!otherVendor) {
+        throw new Error("Failed to create other vendor");
+      }
+      createdVendorIds.push(otherVendor.id);
+
+      const { data: otherVendorProduct, error: otherVendorProductError } = await admin
+        .from("products")
+        .insert({
+          vendor_id: otherVendor.id,
+          name: `Other Vendor Product ${runId}`,
+          price: 120,
+        })
+        .select()
+        .single();
+
+      if (otherVendorProductError) {
+        throw new Error(`Failed to create other vendor product: ${otherVendorProductError.message}`);
+      }
+
+      if (!otherVendorProduct) {
+        throw new Error("Failed to create other vendor product");
+      }
+      otherVendorProductId = otherVendorProduct.id;
+      createdProductIds.push(otherVendorProduct.id);
+
+      const { data: otherBranch, error: otherBranchInsertError } = await admin
+        .from("branches")
+        .insert({
+          vendor_id: otherVendor.id,
+          name: `Other Branch ${runId}`,
+          address_text: "Test address",
+        })
+        .select()
+        .single();
+
+      if (otherBranchInsertError) {
+        throw new Error(`Failed to create other vendor branch: ${otherBranchInsertError.message}`);
+      }
+
+      if (!otherBranch) {
+        throw new Error("Failed to create other vendor branch");
+      }
+      otherVendorBranchId = otherBranch.id;
+      createdBranchIds.push(otherBranch.id);
+
+      const { data: customerAuth, error: customerAuthError } = await admin.auth.admin.createUser({
+        email: customerEmail!,
+        password: customerPassword,
         email_confirm: true,
       });
 
-      if (error || !data.user) {
-        throw new Error(`Failed to create test vendor user: ${error?.message}`);
+      if (customerAuthError || !customerAuth.user) {
+        throw new Error(`Failed to create customer auth user: ${customerAuthError?.message}`);
       }
 
-      vendorUserId = data.user.id;
-      createdUserIds.push(vendorUserId);
-      const { error: vendorUserInsertError } = await admin.from("users").insert({
-        id: vendorUserId,
-        email: testVendorEmail,
-        role: "vendor_admin",
-      });
+      customerUserId = customerAuth.user.id;
+      createdAuthUserIds.push(customerUserId);
 
-      if (vendorUserInsertError) {
-        throw new Error(`Failed to create users row for vendor admin: ${vendorUserInsertError.message}`);
-      }
-
-      signIn = await vendorClient.auth.signInWithPassword({
-        email: testVendorEmail!,
-        password: testVendorPassword!,
-      });
-
-      if (signIn.error || !signIn.data.user || !signIn.data.session) {
-        throw new Error(`Unable to sign in with test vendor user: ${signIn.error?.message}`);
-      }
-    } else if (!signIn.data.user || !signIn.data.session) {
-      throw new Error("Vendor sign-in did not return a valid session");
-    }
-
-    vendorUserId = signIn.data.user.id;
-
-    const { data: existingVendorUserRecord } = await admin
-      .from("users")
-      .select("id")
-      .eq("id", vendorUserId);
-
-    if (!existingVendorUserRecord || existingVendorUserRecord.length === 0) {
-      const { error: vendorUserRowInsertError } = await admin.from("users").insert({
-        id: vendorUserId,
-        email: testVendorEmail,
-        role: "vendor_admin",
-      });
-
-      if (vendorUserRowInsertError) {
-        throw new Error(`Failed to insert vendor admin mapping: ${vendorUserRowInsertError.message}`);
-      }
-      if (!createdUserIds.includes(vendorUserId)) {
-        createdUserIds.push(vendorUserId);
-      }
-    } else {
-      const { error: vendorUserUpdateError } = await admin
+      const { data: customerRow, error: customerInsertError } = await admin
         .from("users")
-        .update({ role: "vendor_admin", email: testVendorEmail })
-        .eq("id", vendorUserId);
+        .insert({ id: customerUserId, role: "customer", email: customerEmail })
+        .select()
+        .single();
 
-      if (vendorUserUpdateError) {
-        throw new Error(`Failed to sync vendor admin role: ${vendorUserUpdateError.message}`);
+      if (customerInsertError) {
+        throw new Error(`Failed to create customer: ${customerInsertError.message}`);
       }
-    }
 
-    const { error: sessionError } = await vendorClient.auth.setSession(signIn.data.session);
+      if (!customerRow) {
+        throw new Error("Failed to create customer user");
+      }
+      createdUserIds.push(customerRow.id);
 
-    if (sessionError) {
-      throw new Error(`Failed to establish vendor session: ${sessionError.message}`);
-    }
+      const { data: customerSignInData, error: customerSignInError } = await customerClient.auth.signInWithPassword({
+        email: customerEmail!,
+        password: customerPassword,
+      });
 
-    const { data: vendor, error: vendorInsertError } = await admin
-      .from("vendors")
-      .insert({
-        name: `Test Vendor ${runId}`,
-        owner_user_id: vendorUserId,
-        has_own_couriers: true,
-        verified: true,
-      })
-      .select()
-      .single();
+      if (customerSignInError || !customerSignInData.user || !customerSignInData.session) {
+        throw new Error(`Unable to sign in customer user: ${customerSignInError?.message}`);
+      }
 
-    if (vendorInsertError) {
-      throw new Error(`Failed to create vendor for test admin: ${vendorInsertError.message}`);
-    }
+      const { error: customerSessionError } = await customerClient.auth.setSession(customerSignInData.session);
 
-    if (vendor) {
-      createdVendorIds.push(vendor.id);
-    }
+      if (customerSessionError) {
+        throw new Error(`Failed to establish customer session: ${customerSessionError.message}`);
+      }
 
-    const { data: otherVendorUser, error: otherVendorUserError } = await admin
-      .from("users")
-      .insert({ role: "vendor_admin", email: otherVendorEmail })
-      .select()
-      .single();
+      const { data: otherOrder, error: otherOrderInsertError } = await admin
+        .from("orders")
+        .insert({
+          branch_id: otherBranch.id,
+          customer_id: customerRow.id,
+          type: "delivery",
+          items_total: 120,
+          delivery_fee: 20,
+          total: 140,
+          payment_method: "cash",
+          status: "NEW",
+        })
+        .select()
+        .single();
 
-    if (otherVendorUserError) {
-      throw new Error(`Failed to create other vendor admin user: ${otherVendorUserError.message}`);
-    }
+      if (otherOrderInsertError) {
+        throw new Error(`Failed to create other vendor order: ${otherOrderInsertError.message}`);
+      }
 
-    if (!otherVendorUser) {
-      throw new Error("Failed to create other vendor admin user record");
-    }
-    createdUserIds.push(otherVendorUser.id);
-
-    const { data: otherVendor, error: otherVendorInsertError } = await admin
-      .from("vendors")
-      .insert({
-        name: `Other Vendor ${runId}`,
-        owner_user_id: otherVendorUser.id,
-        has_own_couriers: false,
-        verified: true,
-      })
-      .select()
-      .single();
-
-    if (otherVendorInsertError) {
-      throw new Error(`Failed to create other vendor: ${otherVendorInsertError.message}`);
-    }
-
-    if (!otherVendor) {
-      throw new Error("Failed to create other vendor");
-    }
-    createdVendorIds.push(otherVendor.id);
-
-    const { data: otherBranch, error: otherBranchInsertError } = await admin
-      .from("branches")
-      .insert({
-        vendor_id: otherVendor.id,
-        name: `Other Branch ${runId}`,
-        address_text: "Test address",
-      })
-      .select()
-      .single();
-
-    if (otherBranchInsertError) {
-      throw new Error(`Failed to create other vendor branch: ${otherBranchInsertError.message}`);
-    }
-
-    if (!otherBranch) {
-      throw new Error("Failed to create other vendor branch");
-    }
-    otherVendorBranchId = otherBranch.id;
-    createdBranchIds.push(otherBranch.id);
-
-    const { data: customer, error: customerInsertError } = await admin
-      .from("users")
-      .insert({ role: "customer", email: customerEmail })
-      .select()
-      .single();
-
-    if (customerInsertError) {
-      throw new Error(`Failed to create customer: ${customerInsertError.message}`);
-    }
-
-    if (!customer) {
-      throw new Error("Failed to create customer user");
-    }
-    createdUserIds.push(customer.id);
-
-    const { data: otherOrder, error: otherOrderInsertError } = await admin
-      .from("orders")
-      .insert({
-        branch_id: otherBranch.id,
-        customer_id: customer.id,
-        type: "delivery",
-        items_total: 120,
-        delivery_fee: 20,
-        total: 140,
-        payment_method: "cash",
-        status: "NEW",
-      })
-      .select()
-      .single();
-
-    if (otherOrderInsertError) {
-      throw new Error(`Failed to create other vendor order: ${otherOrderInsertError.message}`);
-    }
-
-    if (!otherOrder) {
-      throw new Error("Failed to create other vendor order");
-    }
-    otherVendorOrderId = otherOrder.id;
-    createdOrderIds.push(otherOrder.id);
-  });
+      if (!otherOrder) {
+        throw new Error("Failed to create other vendor order");
+      }
+      otherVendorOrderId = otherOrder.id;
+      createdOrderIds.push(otherOrder.id);
+    });
 
   afterAll(async () => {
     if (createdOrderIds.length > 0) {
       await admin.from("orders").delete().in("id", createdOrderIds);
+    }
+    if (createdProductIds.length > 0) {
+      await admin.from("products").delete().in("id", createdProductIds);
     }
     if (createdBranchIds.length > 0) {
       await admin.from("branches").delete().in("id", createdBranchIds);
@@ -243,6 +302,13 @@ if (shouldSkip) {
     }
     if (createdUserIds.length > 0) {
       await admin.from("users").delete().in("id", createdUserIds);
+    }
+    if (createdAuthUserIds.length > 0) {
+      await Promise.all(
+        createdAuthUserIds.map(async (authUserId) => {
+          await admin.auth.admin.deleteUser(authUserId);
+        })
+      );
     }
   });
 
@@ -270,6 +336,59 @@ if (shouldSkip) {
     const { error } = await vendorClient.from("orders").delete().eq("id", otherVendorOrderId);
 
     expect(error?.message).toMatch(/row-level security/i);
+  });
+
+  it("prevents customers from spoofing customer_id via RPC", async () => {
+    const { data, error } = await customerClient.rpc("create_order_with_items", {
+      order_input: {
+        customer_id: randomUUID(),
+        branch_id: otherVendorBranchId,
+        address_text: "Customer address",
+        payment_method: "cash",
+        items_total: 120,
+        total: 120,
+        type: "delivery",
+      },
+      items_input: [
+        {
+          product_id: otherVendorProductId,
+          name_snapshot: "Other Vendor Product",
+          unit_price: 120,
+          qty: 1,
+          total: 120,
+        },
+      ],
+    });
+
+    expect(data).toBeNull();
+    expect(error?.message).toMatch(/customer_id mismatch/i);
+  });
+
+  it("prevents customers from assigning courier via RPC", async () => {
+    const { data, error } = await customerClient.rpc("create_order_with_items", {
+      order_input: {
+        customer_id: customerUserId,
+        branch_id: otherVendorBranchId,
+        address_text: "Customer address",
+        payment_method: "cash",
+        items_total: 120,
+        total: 120,
+        type: "delivery",
+        courier_id: randomUUID(),
+      },
+      items_input: [
+        {
+          product_id: otherVendorProductId,
+          name_snapshot: "Other Vendor Product",
+          unit_price: 120,
+          qty: 1,
+          total: 120,
+        },
+      ],
+    });
+
+    expect(data).toBeNull();
+    expect(error?.message).toMatch(/Customers cannot assign courier_id/i);
   });
   });
 }

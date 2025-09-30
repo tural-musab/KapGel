@@ -183,10 +183,12 @@ create policy "Couriers can view their assigned orders" on public.orders for sel
 );
 
 create policy "Vendor admins can manage their couriers" on public.couriers for all using (
-  vendor_id = (
-    select vendor_id from public.branches where id in (
-      select branch_id from public.orders where courier_id = public.couriers.id
-    ) limit 1
+  vendor_id in (
+    select id from public.vendors where owner_user_id = auth.uid()
+  )
+) with check (
+  vendor_id in (
+    select id from public.vendors where owner_user_id = auth.uid()
   )
 );
 

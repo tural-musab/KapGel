@@ -82,6 +82,34 @@ describe("RBAC", () => {
     });
     expect(ok).toBe(false);
   });
+
+  it("allows vendor admin to manage courier within their vendors", () => {
+    const ok = canAccess({
+      role: "vendor_admin",
+      userId: "vendor-user",
+      vendorIds: ["vendor-1"],
+      resource: {
+        type: "courier",
+        vendorId: "vendor-1",
+      },
+      action: "update",
+    });
+    expect(ok).toBe(true);
+  });
+
+  it("denies vendor admin from managing couriers of other vendors", () => {
+    const ok = canAccess({
+      role: "vendor_admin",
+      userId: "vendor-user",
+      vendorIds: ["vendor-1"],
+      resource: {
+        type: "courier",
+        vendorId: "vendor-2",
+      },
+      action: "delete",
+    });
+    expect(ok).toBe(false);
+  });
 });
 
 describe("getVendorAuthContext", () => {

@@ -79,7 +79,9 @@ CREATE POLICY "Couriers can view their assigned orders" ON orders FOR SELECT USI
 
 -- COURIERS
 CREATE POLICY "Vendor admins can manage their couriers" ON couriers FOR ALL USING (
-  vendor_id = (SELECT vendor_id FROM branches WHERE id IN (SELECT branch_id FROM orders WHERE courier_id = id) LIMIT 1)
+  vendor_id IN (SELECT id FROM vendors WHERE owner_user_id = auth.uid())
+) WITH CHECK (
+  vendor_id IN (SELECT id FROM vendors WHERE owner_user_id = auth.uid())
 );
 
 -- PRODUCTS, CATEGORIES, INVENTORIES

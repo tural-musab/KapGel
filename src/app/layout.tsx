@@ -17,7 +17,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className="min-h-dvh bg-white text-slate-900 antialiased">{children}</body>
+      <body className="min-h-dvh bg-white text-slate-900 antialiased">
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .catch((error) => console.error("Service worker registration failed:", error));
+  });
+}`,
+          }}
+        />
+      </body>
     </html>
   );
 }

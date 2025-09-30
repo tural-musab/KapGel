@@ -9,6 +9,7 @@ type CanAccessParams = {
   role: Role;
   userId?: string;
   vendorIds?: string[];
+  courierId?: string | null;
   resource: OrderRes; // şimdilik sipariş odağı
   action: Action;
 };
@@ -31,7 +32,7 @@ function includesVendorId(vendorIds: string[] | undefined, vendorId: string | nu
 }
 
 export function canAccess(p: CanAccessParams): boolean {
-  const { role, userId, resource, action, vendorIds } = p;
+  const { role, userId, resource, action, vendorIds, courierId } = p;
   if (role === 'admin') return true;
   if (!role) return false;
 
@@ -49,7 +50,7 @@ export function canAccess(p: CanAccessParams): boolean {
     }
     if (role === 'courier') {
       // sadece atandığı siparişi günceller/okur
-      const assigned = resource.courierId && userId && resource.courierId === userId;
+      const assigned = resource.courierId && courierId && resource.courierId === courierId;
       if (action === 'read') return !!assigned;
       if (action === 'update' || action === 'transition') return !!assigned;
       return false;
@@ -124,4 +125,34 @@ export async function getVendorAuthContext(options: VendorAuthContextOptions = {
   }
 
   return { vendorIds: [] };
+}
+
+export type CourierAuthContextOptions = {
+  supabase?: Pick<SupabaseClient, 'from'>;
+  userId?: string | null;
+};
+
+export async function getCourierAuthContext(options: CourierAuthContextOptions = {}): Promise<{ courierId: string | null }> {
+  const { supabase, userId } = options;
+  if (!supabase || !userId) {
+    return { courierId: null };
+  }
+
+  try {
+    const query = supabase
+      .from('couriers')
+      .select('id')
+      .eq('user_id', userId);
+    const { data, error } = await query as unknown as { data?: SupabaseRow[] | null; error?: unknown };
+    if (!error && Array.isArray(data) && data.length > 0) {
+      const courierRow = data.find((row) => typeof row?.id === 'string' && row.id.length > 0);
+      if (courierRow && typeof courierRow.id === 'string') {
+        return { courierId: courierRow.id };
+      }
+    }
+  } catch (error) {
+    // ignore errors and fall through
+  }
+
+  return { courierId: null };
 }

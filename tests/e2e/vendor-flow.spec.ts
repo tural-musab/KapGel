@@ -1,5 +1,14 @@
 import { test, expect } from "@playwright/test";
-test("vendor can manage orders", async ({ page }) => {
-  await page.goto("http://localhost:3000/vendor");
-  expect(true).toBe(false); // intentionally failing until implement
+
+test.describe("Vendor menu page", () => {
+  test("vendor sees configuration warning when Supabase is missing", async ({ page }) => {
+    await page.goto("/vendors/demo-vendor");
+
+    await expect(
+      page.getByText(
+        "Supabase yapılandırması bulunamadığı için işletme menüsü yüklenemiyor.",
+        { exact: true }
+      )
+    ).toBeVisible();
+  });
 });

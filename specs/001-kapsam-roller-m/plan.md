@@ -1,240 +1,153 @@
+# Implementation Plan: Full-Stack Order and Delivery Platform MVP
 
-# Implementation Plan: [FEATURE]
-
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-## Execution Flow (/plan command scope)
-
-```
-1. Load feature spec from Input path
-   → If not found: ERROR "No feature spec at {path}"
-2. Fill Technical Context (scan for NEEDS CLARIFICATION)
-   → Detect Project Type from file system structure or context (web=frontend+backend, mobile=app+api)
-   → Set Structure Decision based on project type
-3. Fill the Constitution Check section based on the content of the constitution document.
-4. Evaluate Constitution Check section below
-   → If violations exist: Document in Complexity Tracking
-   → If no justification possible: ERROR "Simplify approach first"
-   → Update Progress Tracking: Initial Constitution Check
-5. Execute Phase 0 → research.md
-   → If NEEDS CLARIFICATION remain: ERROR "Resolve unknowns"
-6. Execute Phase 1 → contracts, data-model.md, quickstart.md, agent-specific template file (e.g., `CLAUDE.md` for Claude Code, `.github/copilot-instructions.md` for GitHub Copilot, `GEMINI.md` for Gemini CLI, `QWEN.md` for Qwen Code or `AGENTS.md` for opencode).
-7. Re-evaluate Constitution Check section
-   → If new violations: Refactor design, return to Phase 1
-   → Update Progress Tracking: Post-Design Constitution Check
-8. Plan Phase 2 → Describe task generation approach (DO NOT create tasks.md)
-9. STOP - Ready for /tasks command
-```
-
-**IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
-
-- Phase 2: /tasks command creates tasks.md
-- Phase 3-4: Implementation execution (manual or via tools)
+**Branch**: `001-kapsam-roller-m` | **Date**: 2025-09-30 | **Spec**: `specs/001-kapsam-roller-m/spec.md`
+**Input**: Feature specification from `/specs/001-kapsam-roller-m/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+The MVP must deliver a web-only (PWA) experience that covers the entire order lifecycle for customers, vendor admins, couriers, and platform admins. The current codebase already includes the customer discovery flow (`app/page.tsx`), checkout, order tracking shells, Supabase schema/RLS stubs, a cart Zustand store, Playwright/Vitest harness, and the service worker scaffold. Missing work concentrates on B2B (vendor/courier) panels, real-time order orchestration, notification infrastructure, MapLibre components, and production-ready documentation. This plan prioritises solidifying security (RLS + RBAC), completing Supabase integration, and delivering polished UI across all roles in parallel with robust observability. The supporting research, data model, and developer quickstart documents are now in place to guide Phase 1 execution.
 
 ## Technical Context
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+- **Language/Version**: TypeScript 5 on Next.js 15 (Node.js 20 runtime via Vercel default).
+- **Primary Dependencies**: Supabase JS SDK, Drizzle ORM, Tailwind CSS 4, shadcn/ui (to be added), Zustand, Playwright, Vitest, MapLibre GL (not yet installed).
+- **Storage**: Supabase Postgres with schema defined in `db/schema.sql`, migrations under `db/migrations/`, and seed data in `db/seed.mjs`.
+- **Testing**: Vitest unit tests (`tests/unit`), Playwright E2E suites (`tests/e2e`). CI workflow pending.
+- **Target Platform**: Cross-platform browsers (PWA). Deployed via Vercel + Supabase.
+- **Project Type**: Monolithic web application (App Router) with shared server/client code inside `src/`.
+- **Performance Goals**: FCP ≤ 2.5s on mid-tier Android, realtime status propagation ≤ 2s, background sync for carts.
+- **Constraints**: Cash/pickup payments only, MapLibre + OSM tiles, Web Push with email fallback, manual KYC, mobile-first courier UI, offline-capable cart.
+- **Scale/Scope**: Designed for launch in 1–2 pilot cities (≤500 concurrent sessions, ≤200 active couriers), 3 dashboards (customer, vendor, courier) plus admin workflows.
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+- **Güvenlik (Security)**: *At Risk*. RLS policies exist but lack granular INSERT/UPDATE coverage for orders, courier locations, and notifications. Admin tooling not yet gated. Requires RBAC middleware and Supabase policies review.
+- **Performans (Performance)**: *At Risk*. Service worker scaffold present but offline caching not configured; MapLibre and realtime updates not optimised. Need performance budgets and instrumentation.
+- **Basitlik (Simplicity)**: *Pass with follow-up*. Codebase still small; must enforce consistent module boundaries (`src/app`, `lib`, `components`). Avoid premature microservices.
+- **Erişilebilirlik (Accessibility)**: *Missing*. No documented accessibility criteria in UI components; tests absent. Needs accessibility checklist and linting.
+- **İzlenebilirlik (Observability)**: *Missing*. No logging/telemetry wiring. Need Supabase log tables or external APM, plus structured event schema.
+- **Ürün Odağı (Product Focus)**: *Pass*. Spec clearly targets marketplace logistics with defined personas and flows.
 
-- **Güvenlik (Security)**: Does the design use Supabase RLS and role-based access?
-- **Performans (Performance)**: Is the feature designed as a PWA with a fast FCP/TTI and an offline cart?
-- **Basitlik (Simplicity)**: Does the design favor minimal dependencies and a readable architecture?
-- **Erişilebilirlik (Accessibility)**: Does the design meet WCAG AA standards?
-- **İzlenebilirlik (Observability)**: Does the feature include structured event logging and telemetry?
-- **Ürün Odağı (Product Focus)**: Does the feature align with the target market (businesses with couriers/take-away)?
+*Action*: Security/performance/accessibility/observability gaps must be addressed during Phase 1 before task execution.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```
-specs/[###-feature]/
-├── plan.md              # This file (/plan command output)
-├── research.md          # Phase 0 output (/plan command)
-├── data-model.md        # Phase 1 output (/plan command)
-├── quickstart.md        # Phase 1 output (/plan command)
-├── contracts/           # Phase 1 output (/plan command)
-└── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
+specs/001-kapsam-roller-m/
+├── spec.md          # Updated feature definition (complete)
+├── plan.md          # This plan (complete)
+├── research.md      # ✅ Completed 2025-09-30 – integration studies & constitution mitigation actions
+├── data-model.md    # ✅ Completed 2025-09-30 – schema, lifecycle, access controls
+├── quickstart.md    # ✅ Completed 2025-09-30 – onboarding & workflow guide
+├── contracts/       # ❌ Missing – to be produced in Phase 1 (REST/OpenAPI + tests)
+└── tasks.md         # Existing tasks backlog (requires revision after Phase 1)
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+
 ```
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+├── app/
+│   ├── (customer)/checkout/page.tsx
+│   ├── api/orders/route.ts
+│   ├── orders/[id]/page.tsx
+│   ├── vendors/[slug]/page.tsx
+│   └── layout.tsx, page.tsx, globals.css
+├── lib/
+│   ├── cart-store.ts
+│   ├── rbac.ts
+│   └── supabase/{client,server}.ts
+├── components/            # 🚧 To add: shared UI (Map, PushManager, InstallPWA)
+└── workers/service-worker.ts
+
+db/
+├── schema.sql
+├── schema.ts
+├── migrations/
+├── rls.sql
+└── seed.mjs
 
 tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+├── e2e/*.spec.ts
+└── unit/rbac.spec.ts
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Single Next.js monorepo with App Router. Maintain feature folders under `src/app` separated by role. Shared UI lives under `src/components`, shared logic under `src/lib`, database artefacts under `db`, and automation/tests under `tests`. No additional packages required for MVP.
 
 ## Phase 0: Outline & Research
 
-1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
+1. **Outstanding Unknowns**
+   - MapLibre integration best practices within Next.js App Router (SSR + CSR balance).
+   - Supabase Realtime channel design for order + courier streams (channels, filters, auth).
+   - Web Push + VAPID implementation for PWA with Supabase Edge Functions.
+   - Accessibility expectations for courier mobile UX (WCAG mobile form factors).
+   - Observability stack options compatible with Vercel + Supabase (Sentry vs. Logflare).
 
-2. **Generate and dispatch research agents**:
+2. **Research Tasks**
+   - Document integration patterns for MapLibre GL + Next.js (static vs. dynamic import, map token storage).
+   - Capture Supabase best practices for RLS on multi-tenant vendor data and live location updates.
+   - Evaluate Web Push service worker patterns for multi-role dashboards and offline support.
+   - Compile accessibility checklist for forms, tables, realtime updates (aria-live, focus management).
+   - Select observability tooling (logs, metrics, alerting) and outline instrumentation hooks.
 
-   ```
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
-   ```
-
-3. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
-   - Rationale: [why chosen]
-   - Alternatives considered: [what else evaluated]
-
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+3. **Deliverable**: `research.md` summarising decisions, rationale, and alternatives. ✅ **Delivered** (2025-09-30). Close any `NEEDS CLARIFICATION` markers before moving to Phase 1.
 
 ## Phase 1: Design & Contracts
 
-*Prerequisites: research.md complete*
+1. **Data Model Detailing** (`data-model.md`)
+   - Expand Supabase schema into entity diagrams, relations, computed fields, and state machine transitions.
+   - Define order workflow (NEW → CONFIRMED → …) with guard conditions and actor permissions.
+   - Specify notification payload schemas and storage strategy for courier location history.
+   - ✅ **Status**: Draft delivered (2025-09-30); refine with DBML diagram once tooling ready.
 
-1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
+2. **API Contracts** (`contracts/`)
+   - RESTful endpoints for:
+     - Customer order lifecycle (`POST /api/orders`, `GET /api/orders/{id}` realtime subscription handshake).
+     - Vendor management (`GET/POST /api/vendor/orders`, `PATCH /api/orders/{id}/status`).
+     - Courier availability & location (`POST /api/courier/shifts`, `POST /api/courier/location`).
+     - Notification subscriptions (`POST /api/notifications/subscribe`).
+   - Provide OpenAPI spec or typed contract files, plus contract tests in `tests/contract/` that currently fail.
 
-2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+3. **Frontend Design Docs** (`quickstart.md`)
+   - Outline component hierarchy per role, data fetching strategy (server/client components), and routing map.
+   - Document state management decisions (Zustand slices, React Query adoption timeline).
+   - Include UI wireframe references (textual description + acceptance criteria) to guide implementation.
+   - ✅ **Status**: Developer onboarding quickstart published (2025-09-30).
 
-3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
-   - Tests must fail (no implementation yet)
+4. **Security & Observability Plan**
+   - Update `lib/rbac.ts` design with mapping from Supabase JWT claims → role guards.
+   - Outline logging strategy (structured events, telemetry endpoints) and error reporting flows.
+   - Document monitoring/alerting approach using Supabase + third-party tooling.
+   - ✅ **Status**: Mitigation roadmap captured in `research.md`; implementation pending.
 
-4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
-
-5. **Update agent file incrementally** (O(1) operation):
-   - Run `.specify/scripts/bash/update-agent-context.sh gemini`
-     **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
-   - If exists: Add only NEW tech from current plan
-   - Preserve manual additions between markers
-   - Update recent changes (keep last 3)
-   - Keep under 150 lines for token efficiency
-   - Output to repository root
-
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+5. **Re-evaluate Constitution Check**
+   - Confirm RLS coverage, performance budgets, accessibility plan, and observability instrumentation are defined.
+   - Update this plan with status ticks before proceeding to /tasks.
+   - ✅ **Status**: Mitigation roadmap captured (2025-09-30); mark "Pass" after execution.
 
 ## Phase 2: Task Planning Approach
 
-*This section describes what the /tasks command will do - DO NOT execute during /plan*
+*Executed by `/tasks` once Phase 1 artefacts exist.*
 
-**Task Generation Strategy**:
-
-- Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P]
-- Each user story → integration test task
-- Implementation tasks to make tests pass
-
-**Ordering Strategy**:
-
-- TDD order: Tests before implementation
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
-
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
-
-**IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
-
-## Phase 3+: Future Implementation
-
-*These phases are beyond the scope of the /plan command*
-
-**Phase 3**: Task execution (/tasks command creates tasks.md)  
-**Phase 4**: Implementation (execute tasks.md following constitutional principles)  
-**Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
-
-## Complexity Tracking
-
-*Fill ONLY if Constitution Check has violations that must be justified*
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+- Refresh `tasks.md` to align with Phase 1 outputs. Existing checklist marks many incomplete items as `[X]`; must be corrected to reflect reality.
+- Follow TDD-first sequencing: generate contract/unit tests, implement APIs, then UIs.
+- Parallelisable tracks:
+  - **Security/Data**: RLS hardening, RBAC middleware, telemetry.
+  - **Vendor Panel**: Dashboard UI, order management workflows.
+  - **Courier Panel**: Shift/task UI, location updates, map integration.
+  - **Customer Enhancements**: Map + tracking, notifications, offline cart.
+- Ensure tasks include documentation updates (README, runbooks) and release checklist (Supabase migrations, env setup).
 
 ## Progress Tracking
 
-*This checklist is updated during execution flow*
+- **Initial Constitution Check**: Failing (security, performance, accessibility, observability gaps) — must be resolved in Phase 1.
+- **Post-Design Constitution Check**: Documentation and mitigation plans delivered (2025-09-30); awaiting technical execution to mark as Pass.
 
-**Phase Status**:
+## Complexity & Risk Notes
 
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
-
-**Gate Status**:
-
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
-
----
-*Based on Constitution v2.0.0 - See `/memory/constitution.md`*
+- Vendor/courier dashboards share similar data but require role-specific filters; reuse components carefully to avoid leakage.
+- Realtime updates risk race conditions; consider server-side `order_events` table as source of truth with event sourcing.
+- Web Push user consent flows differ on iOS Safari; include education modals early to avoid drop-off.
+- Supabase geography types require PostGIS; confirm extension enabled in migrations.

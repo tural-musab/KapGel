@@ -1,4 +1,15 @@
-import { pgTable, uuid, text, boolean, integer, numeric, jsonb, timestamp, pgEnum, serial, foreignKey } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean, integer, numeric, jsonb, timestamp, pgEnum, serial, customType } from 'drizzle-orm/pg-core';
+
+/**
+ * Drizzle models are retained purely for type inference – Supabase SQL files under `db/`
+ * remain the canonical source of truth for the schema.
+ */
+
+const geographyPoint = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return 'geography(point,4326)';
+  },
+});
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -24,7 +35,7 @@ export const branches = pgTable('branches', {
   name: text('name').notNull(),
   phone: text('phone'),
   addressText: text('address_text'),
-  geoPoint: text('geo_point'), // Drizzle doesn't have a native geography type, use text and PostGIS functions
+  geoPoint: geographyPoint('geo_point'),
   deliveryZoneGeojson: jsonb('delivery_zone_geojson'),
 });
 
@@ -75,7 +86,7 @@ export const orders = pgTable('orders', {
   courierId: uuid('courier_id').references(() => couriers.id),
   type: orderTypeEnum('type').notNull(),
   addressText: text('address_text'),
-  geoPoint: text('geo_point'),
+  geoPoint: geographyPoint('geo_point'),
   status: orderStatusEnum('status').default('NEW'),
   itemsTotal: numeric('items_total', { precision: 10, scale: 2 }).notNull(),
   deliveryFee: numeric('delivery_fee', { precision: 10, scale: 2 }).default('0'),
@@ -135,7 +146,7 @@ export const courierLocations = pgTable('courier_locations', {
   id: serial('id').primaryKey(),
   courierId: uuid('courier_id').references(() => couriers.id, { onDelete: 'cascade' }),
   orderId: uuid('order_id').references(() => orders.id),
-  position: text('position').notNull(), // Using text for geography
+  position: geographyPoint('position').notNull(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 

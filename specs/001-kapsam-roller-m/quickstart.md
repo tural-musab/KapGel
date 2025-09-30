@@ -61,7 +61,7 @@ npx web-push generate-vapid-keys
 │   │   └── api/                     # Server actions & route handlers
 │   ├── components/                  # Shared UI widgets (Map, PushManager, InstallPWA)
 │   └── lib/                         # Client/server utilities (Supabase, RBAC, stores)
-├── db/                              # Drizzle schema, SQL migrations, seeds, RLS
+├── db/                              # Supabase SQL schema/migrations, seeds, RLS, Drizzle type helpers
 ├── workers/service-worker.ts        # PWA service worker entrypoint
 ├── tests/                           # Vitest unit & Playwright E2E suites
 └── specs/001-kapsam-roller-m/       # Spec-kit docs (spec, plan, research, data model, quickstart, tasks)
@@ -77,7 +77,7 @@ Refer to `spec.md` for product scope, `plan.md` for phase sequencing, and `tasks
 
    ```bash
    supabase start
-   pnpm db:push           # Applies schema via Drizzle
+   supabase db push       # Applies schema via Supabase CLI
    pnpm db:seed           # Seeds demo data
    ```
 
@@ -114,8 +114,9 @@ Refer to `spec.md` for product scope, `plan.md` for phase sequencing, and `tasks
    - Write failing Vitest/Playwright specs first (Phase 3.2).
    - Implement server actions and Supabase migrations.
    - Build UI components and integrate realtime updates.
-5. **Accessibility & Performance**: Run Axe checks (`pnpm test:e2e --project=axe`) and Lighthouse (in-browser) on dashboards.
-6. **Observability Hooks**: Ensure new server actions log structured events and capture errors via Sentry helpers in `lib/observability.ts` (to be implemented).
+5. **Database Workflow**: Treat the SQL artefacts in `db/` as canonical; apply changes with `supabase db push` (or `pnpm db:push`) and update the CI Supabase CLI step if new migrations require additional environment context.
+6. **Accessibility & Performance**: Run Axe checks (`pnpm test:e2e --project=axe`) and Lighthouse (in-browser) on dashboards.
+7. **Observability Hooks**: Ensure new server actions log structured events and capture errors via Sentry helpers in `lib/observability.ts` (to be implemented).
 
 ---
 

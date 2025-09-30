@@ -1,6 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 
+import { AuthProvider } from "@/context/auth-context";
+
 export const metadata: Metadata = {
   title: { default: "Kapgel", template: "%s | Kapgel" },
   description: "Kapgel — Gönder Gelsin. Kendi kuryesi olan işletmeler ve gel-al için PWA.",
@@ -17,7 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className="min-h-dvh bg-white text-slate-900 antialiased">{children}</body>
+      <body className="min-h-dvh bg-white text-slate-900 antialiased">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

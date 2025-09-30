@@ -6,10 +6,11 @@ type OrderRes = { type:'order'; ownerUserId:string; vendorId?:string|null; couri
 export function canAccess(p: {
   role: Role;
   userId?: string;
+  courierId?: string;
   resource: OrderRes; // şimdilik sipariş odağı
   action: Action;
 }): boolean {
-  const { role, userId, resource, action } = p;
+  const { role, userId, courierId, resource, action } = p;
   if (role === 'admin') return true;
   if (!role) return false;
 
@@ -26,7 +27,8 @@ export function canAccess(p: {
     }
     if (role === 'courier') {
       // sadece atandığı siparişi günceller/okur
-      const assigned = resource.courierId && userId && resource.courierId === userId;
+      const assigned =
+        resource.courierId && courierId && resource.courierId === courierId;
       if (action === 'read') return !!assigned;
       if (action === 'update' || action === 'transition') return !!assigned;
       return false;

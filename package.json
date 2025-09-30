@@ -14,7 +14,7 @@
     "test:e2e": "playwright test",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
-    "db:push": "drizzle-kit push",
+    "db:push": "supabase migration up",
     "db:seed": "node db/seed.mjs",
     "precommit": "pnpm lint && pnpm test"
   },

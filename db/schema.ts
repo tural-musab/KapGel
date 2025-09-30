@@ -1,157 +1,656 @@
-import { pgTable, uuid, text, boolean, integer, numeric, jsonb, timestamp, pgEnum, serial, foreignKey } from 'drizzle-orm/pg-core';
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  role: text('role').notNull(), // 'customer', 'vendor_admin', 'courier', 'admin'
-  phone: text('phone').unique(),
-  email: text('email').unique(),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export type GeographyPoint = {
+  type: 'Point';
+  coordinates: [number, number];
+  crs?: { type: string; properties: Record<string, unknown> } | null;
+};
 
-export const vendors = pgTable('vendors', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  taxNo: text('tax_no'),
-  ownerUserId: uuid('owner_user_id').references(() => users.id),
-  isPickupEnabled: boolean('is_pickup_enabled').default(false),
-  hasOwnCouriers: boolean('has_own_couriers').default(false),
-  verified: boolean('verified').default(false),
-});
-
-export const branches = pgTable('branches', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  phone: text('phone'),
-  addressText: text('address_text'),
-  geoPoint: text('geo_point'), // Drizzle doesn't have a native geography type, use text and PostGIS functions
-  deliveryZoneGeojson: jsonb('delivery_zone_geojson'),
-});
-
-export const couriers = pgTable('couriers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  isActive: boolean('is_active').default(true),
-  vehicleType: text('vehicle_type'),
-  shiftStatus: text('shift_status').default('offline'), // 'online', 'offline'
-});
-
-export const categories = pgTable('categories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  isActive: boolean('is_active').default(true),
-  sort: integer('sort'),
-});
-
-export const products = pgTable('products', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
-  name: text('name').notNull(),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').default('TRY'),
-  isActive: boolean('is_active').default(true),
-  photoUrl: text('photo_url'),
-});
-
-export const inventories = pgTable('inventories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  branchId: uuid('branch_id').references(() => branches.id, { onDelete: 'cascade' }),
-  productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }),
-  stockPolicy: text('stock_policy').default('infinite'), // 'infinite', 'finite'
-  qty: integer('qty'),
-});
-
-export const orderTypeEnum = pgEnum('order_type', ['delivery', 'pickup']);
-export const orderStatusEnum = pgEnum('order_status', ['NEW', 'CONFIRMED', 'PREPARING', 'PICKED_UP', 'ON_ROUTE', 'DELIVERED', 'REJECTED', 'CANCELED_BY_USER', 'CANCELED_BY_VENDOR']);
-export const paymentMethodEnum = pgEnum('payment_method', ['cash', 'card_on_pickup']);
-
-export const orders = pgTable('orders', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  customerId: uuid('customer_id').references(() => users.id),
-  branchId: uuid('branch_id').references(() => branches.id),
-  courierId: uuid('courier_id').references(() => couriers.id),
-  type: orderTypeEnum('type').notNull(),
-  addressText: text('address_text'),
-  geoPoint: text('geo_point'),
-  status: orderStatusEnum('status').default('NEW'),
-  itemsTotal: numeric('items_total', { precision: 10, scale: 2 }).notNull(),
-  deliveryFee: numeric('delivery_fee', { precision: 10, scale: 2 }).default('0'),
-  total: numeric('total', { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: paymentMethodEnum('payment_method').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-export const orderItems = pgTable('order_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'cascade' }),
-  productId: uuid('product_id').references(() => products.id),
-  nameSnapshot: text('name_snapshot').notNull(),
-  unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
-  qty: integer('qty').notNull(),
-  total: numeric('total', { precision: 10, scale: 2 }).notNull(),
-});
-
-export const events = pgTable('events', {
-  id: serial('id').primaryKey(),
-  orderId: uuid('order_id').references(() => orders.id),
-  type: text('type').notNull(),
-  payloadJson: jsonb('payload_json'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-export const notificationChannelEnum = pgEnum('notification_channel', ['webpush', 'email', 'sms']);
-
-export const notifications = pgTable('notifications', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  channel: notificationChannelEnum('channel').notNull(),
-  tokenOrAddr: text('token_or_addr').notNull(),
-  isActive: boolean('is_active').default(true),
-});
-
-export const planTypeEnum = pgEnum('plan_type', ['fixed', 'revenue_target']);
-
-export const plans = pgTable('plans', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  type: planTypeEnum('type').notNull(),
-  priceMonthly: numeric('price_monthly', { precision: 10, scale: 2 }),
-  revenueThreshold: numeric('revenue_threshold', { precision: 10, scale: 2 }),
-});
-
-export const subscriptions = pgTable('subscriptions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
-  planId: uuid('plan_id').references(() => plans.id),
-  status: text('status'),
-  periodStart: timestamp('period_start'),
-  periodEnd: timestamp('period_end'),
-});
-
-export const courierLocations = pgTable('courier_locations', {
-  id: serial('id').primaryKey(),
-  courierId: uuid('courier_id').references(() => couriers.id, { onDelete: 'cascade' }),
-  orderId: uuid('order_id').references(() => orders.id),
-  position: text('position').notNull(), // Using text for geography
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-export const cities = pgTable('cities', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-});
-
-export const districts = pgTable('districts', {
-  id: serial('id').primaryKey(),
-  cityId: integer('city_id').references(() => cities.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-});
-
-export const neighborhoods = pgTable('neighborhoods', {
-  id: serial('id').primaryKey(),
-  districtId: integer('district_id').references(() => districts.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-});
+export type Database = {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          created_at: string | null;
+          email: string | null;
+          id: string;
+          phone: string | null;
+          role: 'customer' | 'vendor_admin' | 'courier' | 'admin';
+        };
+        Insert: {
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          phone?: string | null;
+          role: 'customer' | 'vendor_admin' | 'courier' | 'admin';
+        };
+        Update: {
+          created_at?: string | null;
+          email?: string | null;
+          id?: string;
+          phone?: string | null;
+          role?: 'customer' | 'vendor_admin' | 'courier' | 'admin';
+        };
+        Relationships: [];
+      };
+      vendors: {
+        Row: {
+          has_own_couriers: boolean | null;
+          id: string;
+          is_pickup_enabled: boolean | null;
+          name: string;
+          owner_user_id: string | null;
+          tax_no: string | null;
+          verified: boolean | null;
+        };
+        Insert: {
+          has_own_couriers?: boolean | null;
+          id?: string;
+          is_pickup_enabled?: boolean | null;
+          name: string;
+          owner_user_id?: string | null;
+          tax_no?: string | null;
+          verified?: boolean | null;
+        };
+        Update: {
+          has_own_couriers?: boolean | null;
+          id?: string;
+          is_pickup_enabled?: boolean | null;
+          name?: string;
+          owner_user_id?: string | null;
+          tax_no?: string | null;
+          verified?: boolean | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vendors_owner_user_id_fkey';
+            columns: ['owner_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      branches: {
+        Row: {
+          address_text: string | null;
+          delivery_zone_geojson: Json | null;
+          geo_point: GeographyPoint | null;
+          id: string;
+          name: string;
+          phone: string | null;
+          vendor_id: string | null;
+        };
+        Insert: {
+          address_text?: string | null;
+          delivery_zone_geojson?: Json | null;
+          geo_point?: GeographyPoint | null;
+          id?: string;
+          name: string;
+          phone?: string | null;
+          vendor_id?: string | null;
+        };
+        Update: {
+          address_text?: string | null;
+          delivery_zone_geojson?: Json | null;
+          geo_point?: GeographyPoint | null;
+          id?: string;
+          name?: string;
+          phone?: string | null;
+          vendor_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'branches_vendor_id_fkey';
+            columns: ['vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      couriers: {
+        Row: {
+          id: string;
+          is_active: boolean | null;
+          shift_status: 'online' | 'offline' | null;
+          user_id: string | null;
+          vehicle_type: string | null;
+          vendor_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          is_active?: boolean | null;
+          shift_status?: 'online' | 'offline' | null;
+          user_id?: string | null;
+          vehicle_type?: string | null;
+          vendor_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          is_active?: boolean | null;
+          shift_status?: 'online' | 'offline' | null;
+          user_id?: string | null;
+          vehicle_type?: string | null;
+          vendor_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'couriers_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'couriers_vendor_id_fkey';
+            columns: ['vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      categories: {
+        Row: {
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          sort: number | null;
+          vendor_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          sort?: number | null;
+          vendor_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          is_active?: boolean | null;
+          name?: string;
+          sort?: number | null;
+          vendor_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'categories_vendor_id_fkey';
+            columns: ['vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      products: {
+        Row: {
+          category_id: string | null;
+          currency: string | null;
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          photo_url: string | null;
+          price: string;
+          vendor_id: string | null;
+        };
+        Insert: {
+          category_id?: string | null;
+          currency?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          photo_url?: string | null;
+          price: string;
+          vendor_id?: string | null;
+        };
+        Update: {
+          category_id?: string | null;
+          currency?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name?: string;
+          photo_url?: string | null;
+          price?: string;
+          vendor_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'products_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'categories';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'products_vendor_id_fkey';
+            columns: ['vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      inventories: {
+        Row: {
+          branch_id: string | null;
+          id: string;
+          product_id: string | null;
+          qty: number | null;
+          stock_policy: 'infinite' | 'finite' | null;
+        };
+        Insert: {
+          branch_id?: string | null;
+          id?: string;
+          product_id?: string | null;
+          qty?: number | null;
+          stock_policy?: 'infinite' | 'finite' | null;
+        };
+        Update: {
+          branch_id?: string | null;
+          id?: string;
+          product_id?: string | null;
+          qty?: number | null;
+          stock_policy?: 'infinite' | 'finite' | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'inventories_branch_id_fkey';
+            columns: ['branch_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'inventories_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      orders: {
+        Row: {
+          address_text: string | null;
+          branch_id: string | null;
+          courier_id: string | null;
+          created_at: string | null;
+          customer_id: string | null;
+          delivery_fee: string | null;
+          geo_point: GeographyPoint | null;
+          id: string;
+          items_total: string;
+          payment_method: Database['public']['Enums']['payment_method'];
+          status: Database['public']['Enums']['order_status'] | null;
+          total: string;
+          type: Database['public']['Enums']['order_type'];
+        };
+        Insert: {
+          address_text?: string | null;
+          branch_id?: string | null;
+          courier_id?: string | null;
+          created_at?: string | null;
+          customer_id?: string | null;
+          delivery_fee?: string | null;
+          geo_point?: GeographyPoint | null;
+          id?: string;
+          items_total: string;
+          payment_method: Database['public']['Enums']['payment_method'];
+          status?: Database['public']['Enums']['order_status'] | null;
+          total: string;
+          type: Database['public']['Enums']['order_type'];
+        };
+        Update: {
+          address_text?: string | null;
+          branch_id?: string | null;
+          courier_id?: string | null;
+          created_at?: string | null;
+          customer_id?: string | null;
+          delivery_fee?: string | null;
+          geo_point?: GeographyPoint | null;
+          id?: string;
+          items_total?: string;
+          payment_method?: Database['public']['Enums']['payment_method'];
+          status?: Database['public']['Enums']['order_status'] | null;
+          total?: string;
+          type?: Database['public']['Enums']['order_type'];
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'orders_branch_id_fkey';
+            columns: ['branch_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'orders_courier_id_fkey';
+            columns: ['courier_id'];
+            isOneToOne: false;
+            referencedRelation: 'couriers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'orders_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      order_items: {
+        Row: {
+          id: string;
+          name_snapshot: string;
+          order_id: string | null;
+          product_id: string | null;
+          qty: number;
+          total: string;
+          unit_price: string;
+        };
+        Insert: {
+          id?: string;
+          name_snapshot: string;
+          order_id?: string | null;
+          product_id?: string | null;
+          qty: number;
+          total: string;
+          unit_price: string;
+        };
+        Update: {
+          id?: string;
+          name_snapshot?: string;
+          order_id?: string | null;
+          product_id?: string | null;
+          qty?: number;
+          total?: string;
+          unit_price?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'order_items_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          created_at: string | null;
+          id: number;
+          order_id: string | null;
+          payload_json: Json | null;
+          type: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: number;
+          order_id?: string | null;
+          payload_json?: Json | null;
+          type: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: number;
+          order_id?: string | null;
+          payload_json?: Json | null;
+          type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          channel: Database['public']['Enums']['notification_channel'];
+          id: string;
+          is_active: boolean | null;
+          token_or_addr: string;
+          user_id: string | null;
+        };
+        Insert: {
+          channel: Database['public']['Enums']['notification_channel'];
+          id?: string;
+          is_active?: boolean | null;
+          token_or_addr: string;
+          user_id?: string | null;
+        };
+        Update: {
+          channel?: Database['public']['Enums']['notification_channel'];
+          id?: string;
+          is_active?: boolean | null;
+          token_or_addr?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      plans: {
+        Row: {
+          id: string;
+          name: string;
+          price_monthly: string | null;
+          revenue_threshold: string | null;
+          type: Database['public']['Enums']['plan_type'];
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          price_monthly?: string | null;
+          revenue_threshold?: string | null;
+          type: Database['public']['Enums']['plan_type'];
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          price_monthly?: string | null;
+          revenue_threshold?: string | null;
+          type?: Database['public']['Enums']['plan_type'];
+        };
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          period_end: string | null;
+          period_start: string | null;
+          plan_id: string | null;
+          status: string | null;
+          vendor_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          period_end?: string | null;
+          period_start?: string | null;
+          plan_id?: string | null;
+          status?: string | null;
+          vendor_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          period_end?: string | null;
+          period_start?: string | null;
+          plan_id?: string | null;
+          status?: string | null;
+          vendor_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'subscriptions_plan_id_fkey';
+            columns: ['plan_id'];
+            isOneToOne: false;
+            referencedRelation: 'plans';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_vendor_id_fkey';
+            columns: ['vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      courier_locations: {
+        Row: {
+          courier_id: string | null;
+          id: number;
+          order_id: string | null;
+          position: GeographyPoint;
+          updated_at: string | null;
+        };
+        Insert: {
+          courier_id?: string | null;
+          id?: number;
+          order_id?: string | null;
+          position: GeographyPoint;
+          updated_at?: string | null;
+        };
+        Update: {
+          courier_id?: string | null;
+          id?: number;
+          order_id?: string | null;
+          position?: GeographyPoint;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'courier_locations_courier_id_fkey';
+            columns: ['courier_id'];
+            isOneToOne: false;
+            referencedRelation: 'couriers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'courier_locations_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      cities: {
+        Row: {
+          id: number;
+          name: string;
+        };
+        Insert: {
+          id?: number;
+          name: string;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+        };
+        Relationships: [];
+      };
+      districts: {
+        Row: {
+          city_id: number | null;
+          id: number;
+          name: string;
+        };
+        Insert: {
+          city_id?: number | null;
+          id?: number;
+          name: string;
+        };
+        Update: {
+          city_id?: number | null;
+          id?: number;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'districts_city_id_fkey';
+            columns: ['city_id'];
+            isOneToOne: false;
+            referencedRelation: 'cities';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      neighborhoods: {
+        Row: {
+          district_id: number | null;
+          id: number;
+          name: string;
+        };
+        Insert: {
+          district_id?: number | null;
+          id?: number;
+          name: string;
+        };
+        Update: {
+          district_id?: number | null;
+          id?: number;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'neighborhoods_district_id_fkey';
+            columns: ['district_id'];
+            isOneToOne: false;
+            referencedRelation: 'districts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+    };
+    Views: never;
+    Functions: {
+      get_my_role: {
+        Args: Record<string, never>;
+        Returns: string | null;
+      };
+    };
+    Enums: {
+      notification_channel: 'webpush' | 'email' | 'sms';
+      order_status:
+        | 'NEW'
+        | 'CONFIRMED'
+        | 'PREPARING'
+        | 'PICKED_UP'
+        | 'ON_ROUTE'
+        | 'DELIVERED'
+        | 'REJECTED'
+        | 'CANCELED_BY_USER'
+        | 'CANCELED_BY_VENDOR';
+      order_type: 'delivery' | 'pickup';
+      payment_method: 'cash' | 'card_on_pickup';
+      plan_type: 'fixed' | 'revenue_target';
+    };
+    CompositeTypes: never;
+  };
+};

@@ -15,7 +15,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
 ## 🧱 Tech Stack
 
 - **Framework**: Next.js 15 (App Router) + TypeScript 5 + Tailwind CSS + shadcn/ui.
-- **Backend/Data**: Supabase Postgres, Drizzle ORM migrations, PostGIS for geospatial features.
+- **Backend/Data**: Supabase Postgres with SQL migrations under `supabase/migrations`, PostGIS for geospatial features.
 - **Realtime**: Supabase Realtime channels for orders and courier telemetry.
 - **State Management**: Zustand for cart/session; React Query planned for dashboard data fetching.
 - **Testing**: Vitest (unit) and Playwright (end-to-end) with accessibility checks via Axe.
@@ -53,10 +53,11 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
    Generate VAPID keys with `npx web-push generate-vapid-keys`.
 3. **Start Supabase & Apply Schema**
    ```bash
-   supabase start
-   pnpm db:push
-   pnpm db:seed
-   ```
+    supabase start
+    pnpm db:push
+    pnpm db:seed
+    ```
+   The canonical source of truth for the database schema and RLS policies lives in `supabase/migrations/20250106120000_initial_schema.sql`. The legacy `db/schema.sql` file simply re-exports that migration for tooling that expects the old path.
 4. **Run the App**
    ```bash
    pnpm dev

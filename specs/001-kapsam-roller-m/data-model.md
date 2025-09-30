@@ -4,7 +4,7 @@
 **Plan**: `specs/001-kapsam-roller-m/plan.md`  \
 **Last Updated**: 2025-09-30
 
-This document details the relational schema, lifecycle state machines, and access considerations for the KapGel order & delivery MVP. It expands upon the base schema defined in `db/schema.sql` and the security policies defined in `db/rls.sql`.
+This document details the relational schema, lifecycle state machines, and access considerations for the KapGel order & delivery MVP. It expands upon the base schema defined in `supabase/migrations/20250106120000_initial_schema.sql` (also re-exported via `db/schema.sql`) where the SQL and RLS policies live side by side.
 
 ---
 

@@ -80,6 +80,108 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 
 ---
 
+## Product Overview & Goals
+
+- **Value Proposition**: KapGel enables local restaurants and markets to offer rapid delivery and pickup without building their own logistics stack. Customers gain a reliable ordering experience with real-time tracking.
+- **Business Outcomes**: Increase order completion rate, support at least 20 concurrent vendors per city, and provide auditable courier performance data for operations teams.
+- **MVP Success Criteria**:
+  - First vendor onboarded with at least one active branch.
+  - 90% of orders completed without manual admin intervention.
+  - End-to-end order flow demonstrated in staging with live Supabase backend.
+
+## Personas & Experience Principles
+
+- **Customer (B2C)**: Prioritises fast search, clear delivery expectations, and frictionless reorder flow.
+- **Vendor Admin (B2B)**: Needs dashboard clarity, status prioritisation, and easy courier assignment.
+- **Courier (Operations)**: Requires quick task triage, mobile-friendly controls, and minimal data entry.
+- **System Admin**: Oversees vendor onboarding, dispute resolution, and platform health.
+
+**Experience Principles**
+- Surfaces next-best action within 3 taps/clicks.
+- Uses optimistic updates with rollback messaging for real-time flows.
+- Provides bilingual UI scaffolding (TR/EN) readiness.
+
+## End-to-End Journey Maps
+
+1. **Customer Ordering**
+   - Discover vendors by city/district → filter by category/promotions.
+   - Browse vendor menu with modifiers and availability indicators.
+   - Add to cart with delivery fee + ETA preview.
+   - Checkout with address autocomplete, delivery instructions, payment choice (cash/pickup).
+   - Receive confirmation page + push notification.
+   - Track order timeline: `Hazırlanıyor → Kurye Yolda → Teslim Edildi` with live map.
+
+2. **Vendor Fulfilment**
+   - Dashboard shows new orders queue with SLA countdown.
+   - Vendor accepts/rejects order; sets preparation time.
+   - Assign courier from available list or request platform dispatch.
+   - Update order status when food ready and when courier pickup complete.
+   - View analytics (orders/hour, cancellations, courier punctuality) — post-MVP placeholder.
+
+3. **Courier Operations**
+   - Toggle availability, view assigned tasks sorted by pickup time.
+   - Accept/decline tasks; once accepted, follow stepper: `Yola Çık → Teslim Et`.
+   - Share GPS pings every 15s foreground; manual "Konumu Güncelle" fallback.
+   - Confirm delivery with optional photo/signature upload (MVP stores metadata, file upload backlog).
+
+4. **Admin Oversight**
+   - Review vendor KYC submissions, approve/deny.
+   - Monitor active orders, intervene on SLA breaches.
+   - Export activity logs for auditing.
+
+## UI/UX Design Direction
+
+- **Information Architecture**
+  - `app/` namespaces: `(customer)` for consumer flows, `vendor/` for B2B, `courier/` for operations, `admin/` reserved.
+  - Persistent top navigation for customer; side navigation for vendor admin.
+- **Visual System**
+  - Tailwind + shadcn/ui; primary colour `#FF6B35`, neutral greys for backgrounds.
+  - Components: cards for vendor listings, timeline component for order status, bottom sheet for courier task details.
+- **Interaction Patterns**
+  - Real-time updates via Supabase Realtime channels; show toast notifications on state transitions.
+  - MapLibre map with overlays for courier route and delivery zone boundaries.
+- **Accessibility**
+  - WCAG AA contrast, keyboard navigation for forms, live region announcements for status updates.
+- **Responsive Targets**
+  - Mobile-first for customer & courier (≤768px), desktop-first for vendor admin (≥1024px).
+
+## Technical Architecture Overview
+
+- **Application**: Next.js 15 App Router with Server Actions for mutations, React Server Components for data fetching.
+- **State Management**: Zustand store for cart and session caches; React Query (planned) for vendor dashboards.
+- **Backend Services**: Supabase Postgres with Drizzle ORM migrations (`db/`), row-level security enforced via policies.
+- **Realtime**: Supabase Realtime for order status and courier location; fallback to polling when WebSocket unavailable.
+- **Maps**: MapLibre GL JS with custom tiles from OSM; geocoding proxied via Supabase Edge Function.
+- **Notifications**: Web Push using VAPID keys stored in Supabase secrets; email fallback via Supabase Functions + Resend (candidate).
+- **Background Workers**: `workers/service-worker.ts` handles offline cart sync, push notifications, and caching strategy (Stale-While-Revalidate for menus).
+
+## Data Model Outline
+
+- **users** (`id`, `role`, `phone`, `email`, `last_login_at`).
+- **vendors** (`id`, `name`, `tax_no`, `kyc_status`, `owner_user_id`).
+- **branches** (`id`, `vendor_id`, `address_id`, `delivery_zone_geojson`, `is_active`, `avg_prep_minutes`).
+- **couriers** (`id`, `user_id`, `vendor_id`, `status`, `last_ping_at`, `location_geom`).
+- **menus**, **menu_items**, **modifiers** (future), **inventory_items` (backlog).
+- **orders** (`id`, `customer_id`, `branch_id`, `status`, `items`, `total_amount`, `delivery_mode`, `address_text`, `geo_point`).
+- **order_events** for timeline, **order_assignments** for courier relation.
+- **addresses** referencing `cities`, `districts`, `neighborhoods` reference tables.
+
+## Non-Functional Requirements
+
+- **Performance**: First Contentful Paint ≤ 2.5s on mid-tier Android devices; API response p95 ≤ 400ms for core order endpoints.
+- **Scalability**: Support 500 concurrent sessions per city with Supabase connection pooling; design for horizontal scaling via Vercel Edge.
+- **Reliability**: Graceful degradation when realtime channel drops; offline cart persistence using IndexedDB via service worker.
+- **Security & Compliance**: Enforce Supabase RLS, audit logs on sensitive actions, GDPR-compliant data retention policy (delete PII on request).
+- **Observability**: Structured logging via Supabase Functions, Sentry integration for client errors, analytics events for funnel metrics.
+
+## Risks & Open Questions
+
+- Supabase Realtime pricing impact when courier count grows beyond 200 concurrent connections.
+- Vendor KYC document storage approach (Supabase storage vs. external provider) — decision pending.
+- Push notification support on iOS Safari (requires user education overlay).
+- Need to validate courier GPS accuracy in dense urban areas; may require smoothing algorithm.
+- Determine SLA for manual admin escalation (target ≤ 5 minutes response).
+
 ## Review & Acceptance Checklist
 
 *GATE: Automated checks run during main() execution*

@@ -12,7 +12,7 @@
 - [X] T005 [P] Create a seed script `db/seed.ts` to populate the database with sample data.
 - [X] T006 [P] Configure Drizzle ORM and create initial migration scripts in `db/migrations/`.
 - [X] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
-- [X] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests.
+- [ ] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests. *(Pending — workflow file missing in repo)*
 - [X] T009 [P] Create the basic application layout in `app/layout.tsx`.
 
 ## Phase 3.2: Tests First (TDD)
@@ -47,8 +47,14 @@
 - [ ] T026 Implement the backend logic to send a push notification when an order's status changes.
 - [ ] T027 [P] Create the reusable Map component in `components/Map.tsx` using MapLibre GL.
 - [ ] T028 [P] Create the `InstallPWA` component in `components/InstallPWA.tsx`.
-- [ ] T029 [P] Write a comprehensive `README.md` with setup and local development instructions.
+- [X] T029 [P] Write a comprehensive `README.md` with setup and local development instructions. *(Delivered 2025-09-30)*
 - [ ] T030 [P] Add comments to complex code sections, especially in `lib/rbac.ts` and the service worker.
+
+## Phase 3.6: Documentation & Governance Catch-up
+
+- [X] T031 Produce `specs/001-kapsam-roller-m/research.md` capturing MapLibre, Supabase Realtime, Web Push, accessibility, and observability decisions. *(Delivered 2025-09-30)*
+- [X] T032 Produce `specs/001-kapsam-roller-m/data-model.md` detailing entities, relationships, and order state machine with RLS implications. *(Delivered 2025-09-30 — requires DBML follow-up)*
+- [X] T033 Produce `specs/001-kapsam-roller-m/quickstart.md` outlining UI architecture, routing, and developer environment steps; update `tasks.md` status flags once documents are complete. *(Delivered 2025-09-30)*
 
 ## Dependencies
 

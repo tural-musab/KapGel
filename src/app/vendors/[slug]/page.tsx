@@ -7,7 +7,7 @@ import type { ComponentProps } from 'react';
 const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 const Button = (props: ComponentProps<'button'>) => <button {...props} />;
 
-export default async function VendorMenuPage({ params }) {
+export default async function VendorMenuPage({ params }: { params: { slug: string } }) {
   const cookieStore = cookies();
   const supabase = createClient();
 

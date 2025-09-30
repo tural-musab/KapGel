@@ -6,7 +6,7 @@ import type { ComponentProps } from 'react';
 // TODO: Replace with shadcn/ui components
 const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 
-export default async function OrderTrackingPage({ params }) {
+export default async function OrderTrackingPage({ params }: { params: { id: string } }) {
   const cookieStore = cookies();
   const supabase = createClient();
 

@@ -37,16 +37,21 @@ if (shouldSkip) {
     const customerPassword = `Customer-${runId}!Pass123`;
     const courierEmail = `courier-${runId}@example.com`;
     const courierPassword = `Courier-${runId}!Pass123`;
+    const otherCourierEmail = `other-courier-${runId}@example.com`;
+    const otherCourierPassword = `OtherCourier-${runId}!Pass123`;
 
     let vendorUserId: string;
     let customerUserId: string;
     let courierUserId: string;
+    let otherCourierUserId: string;
     let otherVendorBranchId: string;
     let otherVendorOrderId: string;
     let otherVendorProductId: string;
     let vendorBranchId: string;
     let vendorOrderId: string;
+    let vendorProductId: string;
     let courierId: string;
+    let otherCourierId: string;
     const createdUserIds: string[] = [];
     const createdVendorIds: string[] = [];
     const createdBranchIds: string[] = [];
@@ -194,6 +199,7 @@ if (shouldSkip) {
         throw new Error("Failed to create vendor product");
       }
 
+      vendorProductId = vendorProduct.id;
       createdProductIds.push(vendorProduct.id);
 
       const { data: courierAuth, error: courierAuthError } = await admin.auth.admin.createUser({
@@ -315,6 +321,56 @@ if (shouldSkip) {
       }
       otherVendorProductId = otherVendorProduct.id;
       createdProductIds.push(otherVendorProduct.id);
+
+      const { data: otherCourierAuth, error: otherCourierAuthError } = await admin.auth.admin.createUser({
+        email: otherCourierEmail,
+        password: otherCourierPassword,
+        email_confirm: true,
+      });
+
+      if (otherCourierAuthError || !otherCourierAuth.user) {
+        throw new Error(`Failed to create other courier auth user: ${otherCourierAuthError?.message}`);
+      }
+
+      otherCourierUserId = otherCourierAuth.user.id;
+      createdAuthUserIds.push(otherCourierUserId);
+
+      const { data: otherCourierUserRow, error: otherCourierUserInsertError } = await admin
+        .from("users")
+        .insert({ id: otherCourierUserId, role: "courier", email: otherCourierEmail })
+        .select()
+        .single();
+
+      if (otherCourierUserInsertError) {
+        throw new Error(`Failed to create other courier user row: ${otherCourierUserInsertError.message}`);
+      }
+
+      if (!otherCourierUserRow) {
+        throw new Error("Failed to create other courier user row");
+      }
+
+      createdUserIds.push(otherCourierUserRow.id);
+
+      const { data: otherCourierRow, error: otherCourierInsertError } = await admin
+        .from("couriers")
+        .insert({
+          vendor_id: otherVendor.id,
+          user_id: otherCourierUserId,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (otherCourierInsertError) {
+        throw new Error(`Failed to create other vendor courier: ${otherCourierInsertError.message}`);
+      }
+
+      if (!otherCourierRow) {
+        throw new Error("Failed to create other vendor courier");
+      }
+
+      otherCourierId = otherCourierRow.id;
+      createdCourierIds.push(otherCourierRow.id);
 
       const { data: otherBranch, error: otherBranchInsertError } = await admin
         .from("branches")
@@ -621,6 +677,33 @@ if (shouldSkip) {
 
     expect(data).toBeNull();
     expect(error?.message).toMatch(/Customers cannot assign courier_id/i);
+  });
+
+  it("prevents vendor admins from assigning couriers from other vendors", async () => {
+    const { data, error } = await vendorClient.rpc("create_order_with_items", {
+      order_input: {
+        customer_id: vendorUserId,
+        branch_id: vendorBranchId,
+        address_text: "Vendor manual order",
+        payment_method: "cash",
+        items_total: 90,
+        total: 90,
+        type: "delivery",
+        courier_id: otherCourierId,
+      },
+      items_input: [
+        {
+          product_id: vendorProductId,
+          name_snapshot: "Vendor Product",
+          unit_price: 90,
+          qty: 1,
+          total: 90,
+        },
+      ],
+    });
+
+    expect(data).toBeNull();
+    expect(error?.message).toMatch(/Courier does not belong to branch vendor/i);
   });
   });
 }

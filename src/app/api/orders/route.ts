@@ -19,6 +19,8 @@ export async function POST(request: Request) {
   }
 
   interface CartItem {
+    id: string;
+    name: string;
     price: number;
     quantity: number;
   }
@@ -45,7 +47,7 @@ export async function POST(request: Request) {
     return new NextResponse('Error creating order', { status: 500 });
   }
 
-  const orderItems = items.map((item) => ({
+  const orderItems = items.map((item: CartItem) => ({
     order_id: order.id,
     product_id: item.id,
     name_snapshot: item.name,

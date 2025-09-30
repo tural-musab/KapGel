@@ -13,7 +13,7 @@ const Label = (props: ComponentProps<'label'>) => <label {...props} />;
 export default function CheckoutPage() {
   const { items, removeItem, clearCart } = useCartStore();
 
-  const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const total = items.reduce((acc: number, item: { price: number; quantity: number; }) => acc + item.price * item.quantity, 0);
 
   const handlePlaceOrder = () => {
     // TODO: Implement order creation logic (T019)

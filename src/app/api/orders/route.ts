@@ -18,7 +18,12 @@ export async function POST(request: Request) {
     return new NextResponse('Missing required fields', { status: 400 });
   }
 
-  const itemsTotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  interface CartItem {
+    price: number;
+    quantity: number;
+  }
+
+  const itemsTotal = items.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
   const total = itemsTotal; // Assuming no delivery fee for now
 
   const { data: order, error } = await supabase

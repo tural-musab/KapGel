@@ -41,7 +41,39 @@ CREATE POLICY "Vendor admins can manage their own branches" ON branches FOR ALL 
 -- ORDERS
 CREATE POLICY "Customers can view their own orders" ON orders FOR SELECT USING (customer_id = auth.uid());
 CREATE POLICY "Vendor admins can view their branch orders" ON orders FOR SELECT USING (
-  branch_id IN (SELECT id FROM branches WHERE vendor_id = (SELECT vendor_id FROM branches WHERE id = branch_id LIMIT 1))
+  EXISTS (
+    SELECT 1
+    FROM branches b
+    JOIN vendors v ON v.id = b.vendor_id
+    WHERE b.id = branch_id
+      AND v.owner_user_id = auth.uid()
+  )
+);
+CREATE POLICY "Vendor admins can update their branch orders" ON orders FOR UPDATE USING (
+  EXISTS (
+    SELECT 1
+    FROM branches b
+    JOIN vendors v ON v.id = b.vendor_id
+    WHERE b.id = branch_id
+      AND v.owner_user_id = auth.uid()
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM branches b
+    JOIN vendors v ON v.id = b.vendor_id
+    WHERE b.id = branch_id
+      AND v.owner_user_id = auth.uid()
+  )
+);
+CREATE POLICY "Vendor admins can delete their branch orders" ON orders FOR DELETE USING (
+  EXISTS (
+    SELECT 1
+    FROM branches b
+    JOIN vendors v ON v.id = b.vendor_id
+    WHERE b.id = branch_id
+      AND v.owner_user_id = auth.uid()
+  )
 );
 CREATE POLICY "Couriers can view their assigned orders" ON orders FOR SELECT USING (courier_id = (SELECT id FROM couriers WHERE user_id = auth.uid()));
 

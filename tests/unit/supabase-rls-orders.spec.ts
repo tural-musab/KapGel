@@ -1,0 +1,275 @@
+import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const testVendorEmail = process.env.SUPABASE_TEST_VENDOR_EMAIL;
+const testVendorPassword = process.env.SUPABASE_TEST_VENDOR_PASSWORD;
+
+const shouldSkip = !supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey || !testVendorEmail || !testVendorPassword;
+
+if (shouldSkip) {
+  describe("Supabase RLS - vendor isolation", () => {
+    it.skip("requires Supabase test credentials", () => {
+      expect(true).toBe(true);
+    });
+  });
+} else {
+  describe("Supabase RLS - vendor isolation", () => {
+    const admin = createClient(supabaseUrl!, supabaseServiceRoleKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const vendorClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const runId = randomUUID();
+    const otherVendorEmail = `other-admin-${runId}@example.com`;
+    const customerEmail = `customer-${runId}@example.com`;
+
+    let vendorUserId: string;
+    let otherVendorBranchId: string;
+    let otherVendorOrderId: string;
+    const createdUserIds: string[] = [];
+    const createdVendorIds: string[] = [];
+    const createdBranchIds: string[] = [];
+    const createdOrderIds: string[] = [];
+
+    beforeAll(async () => {
+    // Ensure vendor test user exists and has proper role mapping
+    let signIn = await vendorClient.auth.signInWithPassword({
+      email: testVendorEmail!,
+      password: testVendorPassword!,
+    });
+
+    if (signIn.error) {
+      const { data, error } = await admin.auth.admin.createUser({
+        email: testVendorEmail!,
+        password: testVendorPassword!,
+        email_confirm: true,
+      });
+
+      if (error || !data.user) {
+        throw new Error(`Failed to create test vendor user: ${error?.message}`);
+      }
+
+      vendorUserId = data.user.id;
+      createdUserIds.push(vendorUserId);
+      const { error: vendorUserInsertError } = await admin.from("users").insert({
+        id: vendorUserId,
+        email: testVendorEmail,
+        role: "vendor_admin",
+      });
+
+      if (vendorUserInsertError) {
+        throw new Error(`Failed to create users row for vendor admin: ${vendorUserInsertError.message}`);
+      }
+
+      signIn = await vendorClient.auth.signInWithPassword({
+        email: testVendorEmail!,
+        password: testVendorPassword!,
+      });
+
+      if (signIn.error || !signIn.data.user || !signIn.data.session) {
+        throw new Error(`Unable to sign in with test vendor user: ${signIn.error?.message}`);
+      }
+    } else if (!signIn.data.user || !signIn.data.session) {
+      throw new Error("Vendor sign-in did not return a valid session");
+    }
+
+    vendorUserId = signIn.data.user.id;
+
+    const { data: existingVendorUserRecord } = await admin
+      .from("users")
+      .select("id")
+      .eq("id", vendorUserId);
+
+    if (!existingVendorUserRecord || existingVendorUserRecord.length === 0) {
+      const { error: vendorUserRowInsertError } = await admin.from("users").insert({
+        id: vendorUserId,
+        email: testVendorEmail,
+        role: "vendor_admin",
+      });
+
+      if (vendorUserRowInsertError) {
+        throw new Error(`Failed to insert vendor admin mapping: ${vendorUserRowInsertError.message}`);
+      }
+      if (!createdUserIds.includes(vendorUserId)) {
+        createdUserIds.push(vendorUserId);
+      }
+    } else {
+      const { error: vendorUserUpdateError } = await admin
+        .from("users")
+        .update({ role: "vendor_admin", email: testVendorEmail })
+        .eq("id", vendorUserId);
+
+      if (vendorUserUpdateError) {
+        throw new Error(`Failed to sync vendor admin role: ${vendorUserUpdateError.message}`);
+      }
+    }
+
+    const { error: sessionError } = await vendorClient.auth.setSession(signIn.data.session);
+
+    if (sessionError) {
+      throw new Error(`Failed to establish vendor session: ${sessionError.message}`);
+    }
+
+    const { data: vendor, error: vendorInsertError } = await admin
+      .from("vendors")
+      .insert({
+        name: `Test Vendor ${runId}`,
+        owner_user_id: vendorUserId,
+        has_own_couriers: true,
+        verified: true,
+      })
+      .select()
+      .single();
+
+    if (vendorInsertError) {
+      throw new Error(`Failed to create vendor for test admin: ${vendorInsertError.message}`);
+    }
+
+    if (vendor) {
+      createdVendorIds.push(vendor.id);
+    }
+
+    const { data: otherVendorUser, error: otherVendorUserError } = await admin
+      .from("users")
+      .insert({ role: "vendor_admin", email: otherVendorEmail })
+      .select()
+      .single();
+
+    if (otherVendorUserError) {
+      throw new Error(`Failed to create other vendor admin user: ${otherVendorUserError.message}`);
+    }
+
+    if (!otherVendorUser) {
+      throw new Error("Failed to create other vendor admin user record");
+    }
+    createdUserIds.push(otherVendorUser.id);
+
+    const { data: otherVendor, error: otherVendorInsertError } = await admin
+      .from("vendors")
+      .insert({
+        name: `Other Vendor ${runId}`,
+        owner_user_id: otherVendorUser.id,
+        has_own_couriers: false,
+        verified: true,
+      })
+      .select()
+      .single();
+
+    if (otherVendorInsertError) {
+      throw new Error(`Failed to create other vendor: ${otherVendorInsertError.message}`);
+    }
+
+    if (!otherVendor) {
+      throw new Error("Failed to create other vendor");
+    }
+    createdVendorIds.push(otherVendor.id);
+
+    const { data: otherBranch, error: otherBranchInsertError } = await admin
+      .from("branches")
+      .insert({
+        vendor_id: otherVendor.id,
+        name: `Other Branch ${runId}`,
+        address_text: "Test address",
+      })
+      .select()
+      .single();
+
+    if (otherBranchInsertError) {
+      throw new Error(`Failed to create other vendor branch: ${otherBranchInsertError.message}`);
+    }
+
+    if (!otherBranch) {
+      throw new Error("Failed to create other vendor branch");
+    }
+    otherVendorBranchId = otherBranch.id;
+    createdBranchIds.push(otherBranch.id);
+
+    const { data: customer, error: customerInsertError } = await admin
+      .from("users")
+      .insert({ role: "customer", email: customerEmail })
+      .select()
+      .single();
+
+    if (customerInsertError) {
+      throw new Error(`Failed to create customer: ${customerInsertError.message}`);
+    }
+
+    if (!customer) {
+      throw new Error("Failed to create customer user");
+    }
+    createdUserIds.push(customer.id);
+
+    const { data: otherOrder, error: otherOrderInsertError } = await admin
+      .from("orders")
+      .insert({
+        branch_id: otherBranch.id,
+        customer_id: customer.id,
+        type: "delivery",
+        items_total: 120,
+        delivery_fee: 20,
+        total: 140,
+        payment_method: "cash",
+        status: "NEW",
+      })
+      .select()
+      .single();
+
+    if (otherOrderInsertError) {
+      throw new Error(`Failed to create other vendor order: ${otherOrderInsertError.message}`);
+    }
+
+    if (!otherOrder) {
+      throw new Error("Failed to create other vendor order");
+    }
+    otherVendorOrderId = otherOrder.id;
+    createdOrderIds.push(otherOrder.id);
+  });
+
+  afterAll(async () => {
+    if (createdOrderIds.length > 0) {
+      await admin.from("orders").delete().in("id", createdOrderIds);
+    }
+    if (createdBranchIds.length > 0) {
+      await admin.from("branches").delete().in("id", createdBranchIds);
+    }
+    if (createdVendorIds.length > 0) {
+      await admin.from("vendors").delete().in("id", createdVendorIds);
+    }
+    if (createdUserIds.length > 0) {
+      await admin.from("users").delete().in("id", createdUserIds);
+    }
+  });
+
+  it("denies access to other vendors' orders", async () => {
+    const { data, error } = await vendorClient
+      .from("orders")
+      .select("id, branch_id")
+      .eq("branch_id", otherVendorBranchId);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(0);
+  });
+
+  it("blocks updates on other vendors' orders", async () => {
+    const { error } = await vendorClient
+      .from("orders")
+      .update({ status: "CONFIRMED" })
+      .eq("id", otherVendorOrderId);
+
+    expect(error?.message).toMatch(/row-level security/i);
+  });
+
+  it("blocks deletions on other vendors' orders", async () => {
+    const { error } = await vendorClient.from("orders").delete().eq("id", otherVendorOrderId);
+
+    expect(error?.message).toMatch(/row-level security/i);
+  });
+  });
+}

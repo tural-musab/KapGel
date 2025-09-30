@@ -52,7 +52,8 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error('Error creating order with items:', error);
-    return new NextResponse('Failed to create order', { status: 500 });
+    const errorMessage = error.message || 'Failed to create order';
+    return new NextResponse(errorMessage, { status: 500 });
   }
 
   const order = Array.isArray(data) ? data[0] : data;

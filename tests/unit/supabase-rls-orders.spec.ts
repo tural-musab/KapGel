@@ -27,23 +27,33 @@ if (shouldSkip) {
     const customerClient = createClient(supabaseUrl!, supabaseAnonKey!, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    const courierClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const runId = randomUUID();
     const otherVendorEmail = `other-admin-${runId}@example.com`;
     const customerEmail = `customer-${runId}@example.com`;
     const customerPassword = `Customer-${runId}!Pass123`;
+    const courierEmail = `courier-${runId}@example.com`;
+    const courierPassword = `Courier-${runId}!Pass123`;
 
     let vendorUserId: string;
     let customerUserId: string;
+    let courierUserId: string;
     let otherVendorBranchId: string;
     let otherVendorOrderId: string;
     let otherVendorProductId: string;
+    let vendorBranchId: string;
+    let vendorOrderId: string;
+    let courierId: string;
     const createdUserIds: string[] = [];
     const createdVendorIds: string[] = [];
     const createdBranchIds: string[] = [];
     const createdOrderIds: string[] = [];
     const createdProductIds: string[] = [];
     const createdAuthUserIds: string[] = [];
+    const createdCourierIds: string[] = [];
 
     beforeAll(async () => {
       // Ensure vendor test user exists and has proper role mapping
@@ -139,8 +149,116 @@ if (shouldSkip) {
         throw new Error(`Failed to create vendor for test admin: ${vendorInsertError.message}`);
       }
 
-      if (vendor) {
-        createdVendorIds.push(vendor.id);
+      if (!vendor) {
+        throw new Error("Failed to create vendor for test admin");
+      }
+
+      createdVendorIds.push(vendor.id);
+
+      const { data: vendorBranch, error: vendorBranchInsertError } = await admin
+        .from("branches")
+        .insert({
+          vendor_id: vendor.id,
+          name: `Vendor Branch ${runId}`,
+          address_text: "Vendor address",
+        })
+        .select()
+        .single();
+
+      if (vendorBranchInsertError) {
+        throw new Error(`Failed to create vendor branch: ${vendorBranchInsertError.message}`);
+      }
+
+      if (!vendorBranch) {
+        throw new Error("Failed to create vendor branch");
+      }
+
+      vendorBranchId = vendorBranch.id;
+      createdBranchIds.push(vendorBranch.id);
+
+      const { data: vendorProduct, error: vendorProductError } = await admin
+        .from("products")
+        .insert({
+          vendor_id: vendor.id,
+          name: `Vendor Product ${runId}`,
+          price: 90,
+        })
+        .select()
+        .single();
+
+      if (vendorProductError) {
+        throw new Error(`Failed to create vendor product: ${vendorProductError.message}`);
+      }
+
+      if (!vendorProduct) {
+        throw new Error("Failed to create vendor product");
+      }
+
+      createdProductIds.push(vendorProduct.id);
+
+      const { data: courierAuth, error: courierAuthError } = await admin.auth.admin.createUser({
+        email: courierEmail,
+        password: courierPassword,
+        email_confirm: true,
+      });
+
+      if (courierAuthError || !courierAuth.user) {
+        throw new Error(`Failed to create courier auth user: ${courierAuthError?.message}`);
+      }
+
+      courierUserId = courierAuth.user.id;
+      createdAuthUserIds.push(courierUserId);
+
+      const { data: courierUserRow, error: courierUserInsertError } = await admin
+        .from("users")
+        .insert({ id: courierUserId, role: "courier", email: courierEmail })
+        .select()
+        .single();
+
+      if (courierUserInsertError) {
+        throw new Error(`Failed to create courier user row: ${courierUserInsertError.message}`);
+      }
+
+      if (!courierUserRow) {
+        throw new Error("Failed to create courier user row");
+      }
+
+      createdUserIds.push(courierUserRow.id);
+
+      const { data: courierRow, error: courierInsertError } = await admin
+        .from("couriers")
+        .insert({
+          vendor_id: vendor.id,
+          user_id: courierUserId,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (courierInsertError) {
+        throw new Error(`Failed to create courier: ${courierInsertError.message}`);
+      }
+
+      if (!courierRow) {
+        throw new Error("Failed to create courier");
+      }
+
+      courierId = courierRow.id;
+      createdCourierIds.push(courierRow.id);
+
+      const { data: courierSignInData, error: courierSignInError } = await courierClient.auth.signInWithPassword({
+        email: courierEmail,
+        password: courierPassword,
+      });
+
+      if (courierSignInError || !courierSignInData.user || !courierSignInData.session) {
+        throw new Error(`Unable to sign in courier user: ${courierSignInError?.message}`);
+      }
+
+      const { error: courierSessionError } = await courierClient.auth.setSession(courierSignInData.session);
+
+      if (courierSessionError) {
+        throw new Error(`Failed to establish courier session: ${courierSessionError.message}`);
       }
 
       const { data: otherVendorUser, error: otherVendorUserError } = await admin
@@ -219,7 +337,7 @@ if (shouldSkip) {
       createdBranchIds.push(otherBranch.id);
 
       const { data: customerAuth, error: customerAuthError } = await admin.auth.admin.createUser({
-        email: customerEmail!,
+        email: customerEmail,
         password: customerPassword,
         email_confirm: true,
       });
@@ -247,7 +365,7 @@ if (shouldSkip) {
       createdUserIds.push(customerRow.id);
 
       const { data: customerSignInData, error: customerSignInError } = await customerClient.auth.signInWithPassword({
-        email: customerEmail!,
+        email: customerEmail,
         password: customerPassword,
       });
 
@@ -259,6 +377,46 @@ if (shouldSkip) {
 
       if (customerSessionError) {
         throw new Error(`Failed to establish customer session: ${customerSessionError.message}`);
+      }
+
+      const { data: vendorOrder, error: vendorOrderInsertError } = await admin
+        .from("orders")
+        .insert({
+          branch_id: vendorBranchId,
+          customer_id: customerRow.id,
+          type: "delivery",
+          items_total: 90,
+          delivery_fee: 10,
+          total: 100,
+          payment_method: "cash",
+          status: "NEW",
+          courier_id: courierId,
+        })
+        .select()
+        .single();
+
+      if (vendorOrderInsertError) {
+        throw new Error(`Failed to create vendor order: ${vendorOrderInsertError.message}`);
+      }
+
+      if (!vendorOrder) {
+        throw new Error("Failed to create vendor order");
+      }
+
+      vendorOrderId = vendorOrder.id;
+      createdOrderIds.push(vendorOrder.id);
+
+      const { error: vendorOrderItemsInsertError } = await admin.from("order_items").insert({
+        order_id: vendorOrder.id,
+        product_id: vendorProduct.id,
+        name_snapshot: vendorProduct.name,
+        unit_price: 90,
+        qty: 1,
+        total: 90,
+      });
+
+      if (vendorOrderItemsInsertError) {
+        throw new Error(`Failed to create vendor order items: ${vendorOrderItemsInsertError.message}`);
       }
 
       const { data: otherOrder, error: otherOrderInsertError } = await admin
@@ -285,11 +443,27 @@ if (shouldSkip) {
       }
       otherVendorOrderId = otherOrder.id;
       createdOrderIds.push(otherOrder.id);
+
+      const { error: otherOrderItemInsertError } = await admin.from("order_items").insert({
+        order_id: otherOrder.id,
+        product_id: otherVendorProduct.id,
+        name_snapshot: otherVendorProduct.name,
+        unit_price: 120,
+        qty: 1,
+        total: 120,
+      });
+
+      if (otherOrderItemInsertError) {
+        throw new Error(`Failed to create other vendor order items: ${otherOrderItemInsertError.message}`);
+      }
     });
 
   afterAll(async () => {
     if (createdOrderIds.length > 0) {
       await admin.from("orders").delete().in("id", createdOrderIds);
+    }
+    if (createdCourierIds.length > 0) {
+      await admin.from("couriers").delete().in("id", createdCourierIds);
     }
     if (createdProductIds.length > 0) {
       await admin.from("products").delete().in("id", createdProductIds);
@@ -312,11 +486,69 @@ if (shouldSkip) {
     }
   });
 
+  it("allows customers to view their own order items", async () => {
+    const { data, error } = await customerClient
+      .from("order_items")
+      .select("id, order_id")
+      .eq("order_id", vendorOrderId);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(1);
+    expect(data?.[0]?.order_id).toBe(vendorOrderId);
+  });
+
+  it("allows vendor admins to view order items for their branches", async () => {
+    const { data, error } = await vendorClient
+      .from("order_items")
+      .select("id, order_id")
+      .eq("order_id", vendorOrderId);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(1);
+    expect(data?.[0]?.order_id).toBe(vendorOrderId);
+  });
+
+  it("allows couriers to view order items for assigned orders", async () => {
+    const { data, error } = await courierClient
+      .from("order_items")
+      .select("id, order_id")
+      .eq("order_id", vendorOrderId);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(1);
+    expect(data?.[0]?.order_id).toBe(vendorOrderId);
+  });
+
   it("denies access to other vendors' orders", async () => {
     const { data, error } = await vendorClient
       .from("orders")
       .select("id, branch_id")
       .eq("branch_id", otherVendorBranchId);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(0);
+  });
+
+  it("denies vendor admins from viewing other vendors' order items", async () => {
+    const { data, error } = await vendorClient
+      .from("order_items")
+      .select("id")
+      .eq("order_id", otherVendorOrderId);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(0);
+  });
+
+  it("denies couriers from viewing unassigned order items", async () => {
+    const { data, error } = await courierClient
+      .from("order_items")
+      .select("id")
+      .eq("order_id", otherVendorOrderId);
 
     expect(error).toBeNull();
     expect(data).toBeDefined();

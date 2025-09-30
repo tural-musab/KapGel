@@ -75,7 +75,40 @@ CREATE POLICY "Vendor admins can delete their branch orders" ON orders FOR DELET
       AND v.owner_user_id = auth.uid()
   )
 );
-CREATE POLICY "Couriers can view their assigned orders" ON orders FOR SELECT USING (courier_id = (SELECT id FROM couriers WHERE user_id = auth.uid()));
+CREATE POLICY "Couriers can view their assigned orders" ON orders FOR SELECT USING (
+  courier_id = (SELECT id FROM couriers WHERE user_id = auth.uid())
+);
+
+-- ORDER ITEMS
+CREATE POLICY "Customers can view their order items" ON order_items FOR SELECT USING (
+  EXISTS (
+    SELECT 1
+    FROM orders o
+    WHERE o.id = order_id
+      AND o.customer_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Vendor admins can view their branch order items" ON order_items FOR SELECT USING (
+  EXISTS (
+    SELECT 1
+    FROM orders o
+    JOIN branches b ON b.id = o.branch_id
+    JOIN vendors v ON v.id = b.vendor_id
+    WHERE o.id = order_id
+      AND v.owner_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Couriers can view their assigned order items" ON order_items FOR SELECT USING (
+  EXISTS (
+    SELECT 1
+    FROM orders o
+    JOIN couriers c ON c.id = o.courier_id
+    WHERE o.id = order_id
+      AND c.user_id = auth.uid()
+  )
+);
 
 -- COURIERS
 CREATE POLICY "Vendor admins can manage their couriers" ON couriers FOR ALL USING (

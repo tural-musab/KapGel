@@ -182,6 +182,36 @@ create policy "Couriers can view their assigned orders" on public.orders for sel
   )
 );
 
+create policy "Customers can view their order items" on public.order_items for select using (
+  exists (
+    select 1
+    from public.orders o
+    where o.id = order_id
+      and o.customer_id = auth.uid()
+  )
+);
+
+create policy "Vendor admins can view their branch order items" on public.order_items for select using (
+  exists (
+    select 1
+    from public.orders o
+    join public.branches b on b.id = o.branch_id
+    join public.vendors v on v.id = b.vendor_id
+    where o.id = order_id
+      and v.owner_user_id = auth.uid()
+  )
+);
+
+create policy "Couriers can view their assigned order items" on public.order_items for select using (
+  exists (
+    select 1
+    from public.orders o
+    join public.couriers c on c.id = o.courier_id
+    where o.id = order_id
+      and c.user_id = auth.uid()
+  )
+);
+
 create policy "Vendor admins can manage their couriers" on public.couriers for all using (
   vendor_id = (
     select vendor_id from public.branches where id in (

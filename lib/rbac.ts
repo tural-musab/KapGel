@@ -4,13 +4,15 @@ export type Role = 'customer'|'vendor_admin'|'courier'|'admin'|null|undefined;
 export type Action = 'read'|'create'|'update'|'delete'|'transition';
 
 type OrderRes = { type:'order'; ownerUserId:string; vendorId?:string|null; courierId?:string|null };
+type CourierRes = { type:'courier'; vendorId:string|null|undefined };
+type Resource = OrderRes | CourierRes;
 
 type CanAccessParams = {
   role: Role;
   userId?: string;
   vendorIds?: string[];
   courierId?: string | null;
-  resource: OrderRes; // şimdilik sipariş odağı
+  resource: Resource;
   action: Action;
 };
 
@@ -53,6 +55,16 @@ export function canAccess(p: CanAccessParams): boolean {
       const assigned = resource.courierId && courierId && resource.courierId === courierId;
       if (action === 'read') return !!assigned;
       if (action === 'update' || action === 'transition') return !!assigned;
+      return false;
+    }
+  }
+  if (resource.type === 'courier') {
+    if (role === 'vendor_admin') {
+      const allowedActions: Action[] = ['read', 'create', 'update', 'delete'];
+      if (!allowedActions.includes(action)) return false;
+      return includesVendorId(vendorIds, resource.vendorId ?? null);
+    }
+    if (role === 'customer' || role === 'courier') {
       return false;
     }
   }

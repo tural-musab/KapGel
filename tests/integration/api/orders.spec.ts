@@ -118,4 +118,30 @@ describe('POST /api/orders', () => {
     expect(response.status).toBe(500);
     await expect(response.text()).resolves.toBe('transaction failed');
   });
+
+  it('rejects requests when payload customerId mismatches the authenticated user', async () => {
+    const response = await POST(
+      buildRequest({
+        ...basePayload,
+        customerId: 'someone-else',
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toBe('Customer ID mismatch');
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects requests attempting to assign a courier directly', async () => {
+    const response = await POST(
+      buildRequest({
+        ...basePayload,
+        courierId: 'courier-1',
+      })
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toBe('Customers cannot assign courier');
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
 });

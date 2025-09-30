@@ -9,7 +9,7 @@
 - [X] T002 [P] Create PWA assets: `public/manifest.webmanifest`, icons, and `workers/service-worker.ts`.
 - [X] T003 [P] Write Supabase schema SQL for all tables (users, vendors, orders, etc.) in `db/schema.sql`.
 - [X] T004 [P] Write Supabase RLS policies for all tables in `db/rls.sql`.
-- [X] T005 [P] Create a seed script `db/seed.ts` to populate the database with sample data.
+- [X] T005 [P] Create a seed script `db/seed.mjs` to populate the database with sample data.
 - [X] T006 [P] Configure Drizzle ORM and create initial migration scripts in `db/migrations/`.
 - [X] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
 - [ ] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests. *(Pending — workflow file missing in repo)*

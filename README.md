@@ -71,7 +71,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
 | `pnpm typecheck` | TypeScript type safety validation. |
 | `pnpm test:unit` | Vitest unit suite (RBAC, utilities). |
 | `pnpm test:e2e` | Playwright scenarios for customer/vendor/courier flows. |
-| `pnpm test:e2e --project=axe` | Automated accessibility assertions. |
+| `pnpm test:e2e --headed` | Optional headed run for manual accessibility and UX review (Axe automation pending). |
 
 A CI workflow (`.github/workflows/ci.yml`) is pending (see `tasks.md` T008).
 

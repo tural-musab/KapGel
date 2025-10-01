@@ -59,7 +59,7 @@ npx web-push generate-vapid-keys
 │   │   ├── courier/                 # Courier workspace (to be implemented)
 │   │   ├── admin/                   # Reserved for future admin tools
 │   │   └── api/                     # Server actions & route handlers
-│   ├── components/                  # Shared UI widgets (Map, PushManager, InstallPWA)
+│   ├── components/                  # Planned shared UI widgets (placeholder: src/components/README.md)
 │   └── lib/                         # Client/server utilities (Supabase, RBAC, stores)
 ├── db/                              # Schema snapshot, seeds, RLS helpers, read-only TypeScript types
 ├── supabase/migrations/             # Supabase CLI migrations (source of truth for schema changes)

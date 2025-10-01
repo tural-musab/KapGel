@@ -10,8 +10,8 @@ The MVP must deliver a web-only (PWA) experience that covers the entire order li
 ## Technical Context
 
 - **Language/Version**: TypeScript 5 on Next.js 15 (Node.js 20 runtime via Vercel default).
-- **Primary Dependencies**: Supabase JS SDK, Drizzle ORM (type inference only), Tailwind CSS 4, shadcn/ui (to be added), Zustand, Playwright, Vitest, MapLibre GL (not yet installed).
-- **Storage**: Supabase Postgres with schema defined in `db/schema.sql`, migrations under `db/migrations/`, and seed data in `db/seed.mjs`.
+- **Primary Dependencies**: Supabase JS SDK, Drizzle ORM (type inference only; migrations executed via Supabase CLI), Tailwind CSS 4, shadcn/ui (to be added), Zustand, Playwright, Vitest, MapLibre GL (not yet installed).
+- **Storage**: Supabase Postgres with schema defined in `db/schema.sql`, migrations under `supabase/migrations/`, and seed data in `db/seed.mjs`.
 - **Testing**: Vitest unit tests (`tests/unit`), Playwright E2E suites (`tests/e2e`). CI workflow pending.
 - **Target Platform**: Cross-platform browsers (PWA). Deployed via Vercel + Supabase.
 - **Project Type**: Monolithic web application (App Router) with shared server/client code inside `src/`.
@@ -65,16 +65,18 @@ src/
 db/
 ├── schema.sql
 ├── schema.ts
-├── migrations/
 ├── rls.sql
 └── seed.mjs
+
+supabase/
+└── migrations/      # Managed via Supabase CLI `supabase migration` commands
 
 tests/
 ├── e2e/*.spec.ts
 └── unit/rbac.spec.ts
 ```
 
-**Structure Decision**: Single Next.js monorepo with App Router. Maintain feature folders under `src/app` separated by role. Shared UI lives under `src/components`, shared logic under `src/lib`, database artefacts under `db`, and automation/tests under `tests`. No additional packages required for MVP.
+**Structure Decision**: Single Next.js monorepo with App Router. Maintain feature folders under `src/app` separated by role. Shared UI lives under `src/components`, shared logic under `src/lib`, database artefacts under `db`, Supabase CLI-managed migrations under `supabase/migrations`, and automation/tests under `tests`. No additional packages required for MVP.
 
 ## Phase 0: Outline & Research
 

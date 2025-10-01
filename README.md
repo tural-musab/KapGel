@@ -83,7 +83,7 @@ The CI pipeline uses the Supabase CLI to push schema changes; when you add migra
 ```
 src/
 ├── app/               # App Router routes per role (customer, vendor, courier, admin)
-├── components/        # Shared UI components (Map, PushManager, InstallPWA)
+├── components/        # Planned shared UI components (see src/components/README.md)
 ├── lib/               # Client/server utilities (Supabase, RBAC, stores)
 ├── db/                # Schema snapshot, seeds, RLS helpers, and read-only TypeScript types
 ├── supabase/migrations/ # Supabase CLI migrations (source of truth for schema changes)

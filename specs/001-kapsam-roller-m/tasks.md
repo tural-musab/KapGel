@@ -12,7 +12,7 @@
 - [X] T005 [P] Create a seed script `db/seed.mjs` to populate the database with sample data.
 - [X] T006 [P] Configure Drizzle ORM and create initial migration scripts in `db/migrations/`.
 - [X] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
-- [ ] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests. *(Pending — workflow file missing in repo)*
+- [X] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests.
 - [X] T009 [P] Create the basic application layout in `app/layout.tsx`.
 
 ## Phase 3.2: Tests First (TDD)

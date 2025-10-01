@@ -12,7 +12,7 @@ The MVP must deliver a web-only (PWA) experience that covers the entire order li
 - **Language/Version**: TypeScript 5 on Next.js 15 (Node.js 20 runtime via Vercel default).
 - **Primary Dependencies**: Supabase JS SDK, Drizzle ORM (type inference only), Tailwind CSS 4, shadcn/ui (to be added), Zustand, Playwright, Vitest, MapLibre GL (not yet installed).
 - **Storage**: Supabase Postgres with schema defined in `db/schema.sql`, migrations under `db/migrations/`, and seed data in `db/seed.mjs`.
-- **Testing**: Vitest unit tests (`tests/unit`), Playwright E2E suites (`tests/e2e`). CI workflow pending.
+- **Testing**: Vitest unit tests (`tests/unit`), Playwright E2E suites (`tests/e2e`). Mevcut CI iş akışı `.github/workflows/ci.yml` lint, build ve test adımlarını çalıştırıyor.
 - **Target Platform**: Cross-platform browsers (PWA). Deployed via Vercel + Supabase.
 - **Project Type**: Monolithic web application (App Router) with shared server/client code inside `src/`.
 - **Performance Goals**: FCP ≤ 2.5s on mid-tier Android, realtime status propagation ≤ 2s, background sync for carts.

@@ -74,7 +74,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
 | `pnpm test:e2e` | Playwright scenarios for customer/vendor/courier flows. |
 | `pnpm test:e2e --headed` | Optional headed run for manual accessibility and UX review (Axe automation pending). |
 
-A CI workflow (`.github/workflows/ci.yml`) is pending (see `tasks.md` T008).
+CI iş akışı (`.github/workflows/ci.yml`) pnpm bağımlılıklarını kurup Supabase şemasını uygular, ardından lint, build ve test komutlarını çalıştırır.
 
 The CI pipeline uses the Supabase CLI to push schema changes; when you add migrations under `supabase/migrations/`, ensure the same `supabase db push` step continues to pass.
 

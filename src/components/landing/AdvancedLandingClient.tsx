@@ -1,24 +1,113 @@
-// @ts-nocheck -- Prototype component ported from Kap-Gel; will be typed during integration effort
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Clock, Star, ShoppingBag, Bike, Package, ChevronRight, Menu, X, Play, Shield, Zap, Heart, TrendingUp, Filter, Grid, List, User, Bell, Truck, CheckCircle, Phone, MessageCircle, Plus, Minus } from 'lucide-react';
+import Image from 'next/image';
+import { Search, MapPin, Clock, Star, ShoppingBag, Bike, Package, ChevronRight, Menu, X, Play, Shield, Zap, Heart, TrendingUp, Filter, Grid, List, User, Bell, Truck, CheckCircle, Phone, MessageCircle } from 'lucide-react';
+
+type City = {
+  id: number;
+  name: string;
+  lat: number;
+  lng: number;
+  districts: string[];
+};
+
+type Category = {
+  id: string;
+  name: string;
+  icon: string;
+};
+
+type Vendor = {
+  id: number;
+  name: string;
+  rating: number;
+  category: string;
+  deliveryTime: number;
+  image: string;
+  minOrder: number;
+  badge: string | null;
+  description: string;
+  address: string;
+  deliveryRadius: number;
+  totalOrders: number;
+  deliveryFee: number;
+  openingTime: string;
+  closingTime: string;
+  cuisines: string[];
+  isFavorite: boolean;
+};
+
+type Feature = {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  gradient: string;
+};
+
+type Stat = {
+  number: string;
+  label: string;
+};
+
+type OrderStatus = 'order_placed' | 'preparing' | 'on_the_way' | 'arriving' | 'delivered';
+
+type TimelineEntry = {
+  step: OrderStatus;
+  time: string;
+  message?: string;
+};
+
+type ActiveOrder = {
+  id: number;
+  vendor: Vendor;
+  status: OrderStatus;
+  estimatedTime: number;
+};
+
+type Courier = {
+  id: number;
+  name: string;
+  avatar: string;
+  rating: number;
+  distance: number;
+  time: number;
+  lat: number;
+  lng: number;
+  status: OrderStatus;
+  vehicle: string;
+};
+
+type FilterState = {
+  category: string;
+  rating: number;
+  deliveryTime: string;
+};
+
+type UserLocation = {
+  lat: number;
+  lng: number;
+};
+
+const ORDER_FLOW: OrderStatus[] = ['order_placed', 'preparing', 'on_the_way', 'arriving', 'delivered'];
 
 const KapgelAdvancedLanding = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('');
-  const [activeTab, setActiveTab] = useState('restaurants');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({ category: 'all', rating: 0, deliveryTime: 'all' });
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('restaurants');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filters, setFilters] = useState<FilterState>({ category: 'all', rating: 0, deliveryTime: 'all' });
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // grid or list
-  const [userLocation, setUserLocation] = useState({ lat: 41.0082, lng: 28.9784 }); // Istanbul coordinates
-  const [orderTimeline, setOrderTimeline] = useState([]);
-  const [currentOrder, setCurrentOrder] = useState(null);
-  const [activeCourier, setActiveCourier] = useState(null);
-  const mapRef = useRef(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [userLocation] = useState<UserLocation>({ lat: 41.0082, lng: 28.9784 });
+  const [orderTimeline, setOrderTimeline] = useState<TimelineEntry[]>([]);
+  const [currentOrder, setCurrentOrder] = useState<ActiveOrder | null>(null);
+  const [activeCourier, setActiveCourier] = useState<Courier | null>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
 
   // Mock data with more detail
-  const cities = [
+  const cities: City[] = [
     { id: 1, name: 'İstanbul', lat: 41.0082, lng: 28.9784, districts: ['Kadıköy', 'Beşiktaş', 'Şişli', 'Levent', 'Bakırköy'] },
     { id: 2, name: 'Ankara', lat: 39.9334, lng: 32.8597, districts: ['Çankaya', 'Kızılay', 'Yenişehir', 'Sıhhiye', 'Ulus'] },
     { id: 3, name: 'İzmir', lat: 38.4237, lng: 27.1428, districts: ['Alsancak', 'Konak', 'Bornova', 'Karşıyaka', 'Çeşme'] },
@@ -27,7 +116,7 @@ const KapgelAdvancedLanding = () => {
     { id: 6, name: 'Adana', lat: 37.0000, lng: 35.3213, districts: ['Seyhan', 'Yüreğir', 'Çukurova', 'Sarıçam', 'Feke'] },
   ];
 
-  const categories = [
+  const categories: Category[] = [
     { id: 'all', name: 'Tümü', icon: '🍽️' },
     { id: 'fastfood', name: 'Fast Food', icon: '🍔' },
     { id: 'italian', name: 'İtalyan', icon: '🍕' },
@@ -38,7 +127,7 @@ const KapgelAdvancedLanding = () => {
     { id: 'grocery', name: 'Market', icon: '🛒' },
   ];
 
-  const featuredVendors = [
+  const featuredVendors: Vendor[] = [
     { 
       id: 1,
       name: 'Burger House Premium', 
@@ -117,7 +206,7 @@ const KapgelAdvancedLanding = () => {
     },
   ];
 
-  const features = [
+  const features: Feature[] = [
     { icon: <Zap className="w-8 h-8" />, title: 'Süper Hızlı Teslimat', desc: 'Ortalama 20 dakikada kapınızda', gradient: 'from-yellow-400 to-orange-500' },
     { icon: <Shield className="w-8 h-8" />, title: 'Güvenli Alışveriş', desc: 'Güvenli ödeme ve kurye takibi', gradient: 'from-blue-400 to-indigo-500' },
     { icon: <Clock className="w-8 h-8" />, title: '24/7 Canlı Takip', desc: 'Siparişinizi anında takip edin', gradient: 'from-purple-400 to-pink-500' },
@@ -126,7 +215,7 @@ const KapgelAdvancedLanding = () => {
     { icon: <CheckCircle className="w-8 h-8" />, title: 'Kalite Garantisi', desc: 'Her sipariş kalite kontrolünden geçer', gradient: 'from-cyan-400 to-blue-500' },
   ];
 
-  const stats = [
+  const stats: Stat[] = [
     { number: '500+', label: 'İşletme' },
     { number: '50K+', label: 'Mutlu Müşteri' },
     { number: '100K+', label: 'Sipariş' },
@@ -135,21 +224,34 @@ const KapgelAdvancedLanding = () => {
     { number: '24/7', label: 'Hizmet' },
   ];
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Simulate real-time courier movement
   useEffect(() => {
     const interval = setInterval(() => {
       if (currentOrder && activeCourier) {
         setOrderTimeline(prev => {
-          const lastEvent = prev[prev.length - 1] || { step: 'order_placed' };
-          const nextSteps = ['preparing', 'on_the_way', 'arriving', 'delivered'];
-          const currentIndex = nextSteps.indexOf(lastEvent.step);
-          
-          if (currentIndex < nextSteps.length - 1) {
-            return [...prev, { 
-              step: nextSteps[currentIndex + 1], 
-              time: new Date().toLocaleTimeString() 
-            }];
+          const lastEvent = prev[prev.length - 1] ?? null;
+          const currentStep = lastEvent?.step ?? 'order_placed';
+          const currentIndex = ORDER_FLOW.indexOf(currentStep);
+
+          if (currentIndex > -1 && currentIndex < ORDER_FLOW.length - 1) {
+            const nextStep = ORDER_FLOW[currentIndex + 1];
+            return [
+              ...prev,
+              {
+                step: nextStep,
+                time: new Date().toLocaleTimeString()
+              }
+            ];
           }
+
           return prev;
         });
       }
@@ -190,25 +292,32 @@ const KapgelAdvancedLanding = () => {
     return matchesCategory && matchesRating && matchesDeliveryTime && matchesSearch;
   });
 
-  const startOrder = (vendorId) => {
+  const startOrder = (vendorId: number) => {
     const vendor = featuredVendors.find(v => v.id === vendorId);
+    if (!vendor) {
+      return;
+    }
+
     setCurrentOrder({
       id: Date.now(),
-      vendor: vendor,
+      vendor,
       status: 'preparing',
       estimatedTime: vendor.deliveryTime
     });
-    
-    setOrderTimeline([{
-      step: 'order_placed',
-      time: new Date().toLocaleTimeString(),
-      message: 'Siparişiniz alındı ve hazırlanmaya başlandı'
-    }]);
+
+    setOrderTimeline([
+      {
+        step: 'order_placed',
+        time: new Date().toLocaleTimeString(),
+        message: 'Siparişiniz alındı ve hazırlanmaya başlandı'
+      }
+    ]);
   };
 
-  const toggleFavorite = (vendorId) => {
+  const toggleFavorite = (vendorId: number) => {
     // In a real app, this would update the backend
     // For now, we'll just log the action
+    console.debug('toggleFavorite clicked for vendor', vendorId);
   };
 
   return (
@@ -305,7 +414,7 @@ const KapgelAdvancedLanding = () => {
               <div className="space-y-4">
                 <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-orange-100 to-red-100 px-4 py-2 rounded-full">
                   <TrendingUp className="w-4 h-4 text-orange-600" />
-                  <span className="text-sm font-medium text-orange-600">Türkiye'nin Yeni Nesil Teslimat Platformu</span>
+                  <span className="text-sm font-medium text-orange-600">Türkiye’nin Yeni Nesil Teslimat Platformu</span>
                 </div>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -858,10 +967,14 @@ const KapgelAdvancedLanding = () => {
             
             <div className="relative">
               <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-3xl p-8">
-                <img 
+                <Image
                   src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Crect fill='%23f97316' width='600' height='400' rx='20'/%3E%3Crect fill='white' x='50' y='50' width='500' height='300' rx='10'/%3E%3Ccircle fill='%23f59e0b' cx='150' cy='150' r='40'/%3E%3Crect fill='%2310b981' x='250' y='130' width='200' height='40' rx='5'/%3E%3Crect fill='%23ef4444' x='250' y='200' width='200' height='40' rx='5'/%3E%3C/svg%3E"
                   alt="Business Dashboard"
-                  className="rounded-2xl shadow-2xl w-full"
+                  width={600}
+                  height={400}
+                  className="rounded-2xl shadow-2xl w-full h-auto"
+                  sizes="(max-width: 1024px) 100vw, 480px"
+                  priority
                 />
               </div>
               
@@ -893,7 +1006,7 @@ const KapgelAdvancedLanding = () => {
                     <Star key={i} className={`w-5 h-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-4">"KapGel sayesinde favori restoranımdan en sevdiğim yemekleri çok kısa sürede kapımıda alabiliyorum. Canlı takip özelliği çok etkileyici!"</p>
+                <p className="text-gray-700 mb-4">“KapGel sayesinde favori restoranımdan en sevdiğim yemekleri çok kısa sürede kapımıda alabiliyorum. Canlı takip özelliği çok etkileyici!”</p>
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold mr-3">A</div>
                   <div>

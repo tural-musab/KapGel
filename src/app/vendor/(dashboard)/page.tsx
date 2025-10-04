@@ -110,7 +110,7 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export default async function VendorDashboardPage() {
-  const { supabase, user, role } = await requireRole(['vendor_admin', 'admin']);
+  const { supabase, user } = await requireRole(['vendor_admin', 'admin']);
 
   const { data: vendorRows } = await supabase
     .from('vendors')

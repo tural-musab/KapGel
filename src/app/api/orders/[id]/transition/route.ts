@@ -78,7 +78,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { id } = await context.params;
-  const { supabase, user, role } = await requireRole(['vendor_admin', 'courier', 'admin']);
+  const { supabase, role } = await requireRole(['vendor_admin', 'courier', 'admin']);
 
   const parseResult = transitionPayloadSchema.safeParse(await request.json());
   if (!parseResult.success) {

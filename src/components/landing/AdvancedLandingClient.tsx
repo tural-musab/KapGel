@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
@@ -974,10 +975,13 @@ const KapgelAdvancedLanding = () => {
             
             <div className="relative">
               <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-3xl p-8">
-                <img 
+                <Image
                   src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Crect fill='%23f97316' width='600' height='400' rx='20'/%3E%3Crect fill='white' x='50' y='50' width='500' height='300' rx='10'/%3E%3Ccircle fill='%23f59e0b' cx='150' cy='150' r='40'/%3E%3Crect fill='%2310b981' x='250' y='130' width='200' height='40' rx='5'/%3E%3Crect fill='%23ef4444' x='250' y='200' width='200' height='40' rx='5'/%3E%3C/svg%3E"
                   alt="Business Dashboard"
-                  className="rounded-2xl shadow-2xl w-full"
+                  width={600}
+                  height={400}
+                  className="w-full rounded-2xl shadow-2xl"
+                  priority
                 />
               </div>
               

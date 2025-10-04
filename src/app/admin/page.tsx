@@ -7,37 +7,70 @@ import { requireRole } from 'lib/auth/server-guard';
 
 import type { AdminDashboardClientProps } from '@/components/admin/AdminDashboardClient';
 
-function normaliseUser(row: any) {
+type SupabaseUserRow = {
+  id: string;
+  email: string | null;
+  role: string | null;
+  created_at: string | null;
+};
+
+type VendorApplicationRow = {
+  id: string;
+  business_name: string | null;
+  status: 'pending' | 'approved' | 'rejected' | null;
+  created_at: string | null;
+  updated_at: string | null;
+  users: SupabaseUserRow[] | SupabaseUserRow | null;
+};
+
+type CourierApplicationRow = {
+  id: string;
+  vehicle_type: string | null;
+  status: 'pending' | 'approved' | 'rejected' | null;
+  created_at: string | null;
+  updated_at: string | null;
+  users: SupabaseUserRow[] | SupabaseUserRow | null;
+};
+
+function normaliseUser(row: SupabaseUserRow) {
   return {
-    id: row.id as string,
-    email: (row.email ?? null) as string | null,
+    id: row.id,
+    email: row.email ?? null,
     role: (row.role ?? 'pending') as AdminDashboardClientProps['users'][number]['role'],
-    createdAt: (row.created_at ?? null) as string | null,
+    createdAt: row.created_at ?? null,
   } satisfies AdminDashboardClientProps['users'][number];
 }
 
-function normaliseVendorApplication(row: any) {
-  const userRow = Array.isArray(row.users) ? row.users[0] : row.users;
+function takeFirstUser(users: SupabaseUserRow[] | SupabaseUserRow | null) {
+  if (!users) return null;
+  if (Array.isArray(users)) {
+    return users[0] ?? null;
+  }
+  return users;
+}
+
+function normaliseVendorApplication(row: VendorApplicationRow) {
+  const userRow = takeFirstUser(row.users);
   return {
-    id: row.id as string,
+    id: row.id,
     type: 'vendor' as const,
-    businessName: (row.business_name ?? null) as string | null,
+    businessName: row.business_name ?? null,
     status: (row.status ?? 'pending') as 'pending' | 'approved' | 'rejected',
-    createdAt: (row.created_at ?? null) as string | null,
-    updatedAt: (row.updated_at ?? null) as string | null,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
     user: userRow ? normaliseUser(userRow) : null,
   } satisfies AdminDashboardClientProps['vendorApplications'][number];
 }
 
-function normaliseCourierApplication(row: any) {
-  const userRow = Array.isArray(row.users) ? row.users[0] : row.users;
+function normaliseCourierApplication(row: CourierApplicationRow) {
+  const userRow = takeFirstUser(row.users);
   return {
-    id: row.id as string,
+    id: row.id,
     type: 'courier' as const,
-    vehicleType: (row.vehicle_type ?? null) as string | null,
+    vehicleType: row.vehicle_type ?? null,
     status: (row.status ?? 'pending') as 'pending' | 'approved' | 'rejected',
-    createdAt: (row.created_at ?? null) as string | null,
-    updatedAt: (row.updated_at ?? null) as string | null,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
     user: userRow ? normaliseUser(userRow) : null,
   } satisfies AdminDashboardClientProps['courierApplications'][number];
 }
@@ -87,9 +120,13 @@ export default async function AdminDashboardPage() {
     console.error('Users fetch error', usersResult.error);
   }
 
-  const vendorApplications = (vendorApplicationsResult.data ?? []).map(normaliseVendorApplication);
-  const courierApplications = (courierApplicationsResult.data ?? []).map(normaliseCourierApplication);
-  const allUsers = (usersResult.data ?? []).map(normaliseUser);
+  const vendorApplicationsRaw = (vendorApplicationsResult.data ?? []) as VendorApplicationRow[];
+  const courierApplicationsRaw = (courierApplicationsResult.data ?? []) as CourierApplicationRow[];
+  const allUsersRaw = (usersResult.data ?? []) as SupabaseUserRow[];
+
+  const vendorApplications = vendorApplicationsRaw.map(normaliseVendorApplication);
+  const courierApplications = courierApplicationsRaw.map(normaliseCourierApplication);
+  const allUsers = allUsersRaw.map(normaliseUser);
 
   const totalUsers = allUsers.length;
   const pendingVendor = vendorApplications.filter((app) => app.status === 'pending').length;

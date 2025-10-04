@@ -24,7 +24,7 @@ import {
   type AdminActionResult,
 } from '@/app/admin/actions';
 import { DashboardStatCard } from '@/components/ui/dashboard';
-import type { DashboardStatCardProps } from '@/components/ui/dashboard';
+import type { DashboardTrend } from '@/components/ui/dashboard';
 import type { AppRoleMetadata } from 'lib/auth/roles';
 
 type ActionResponse = AdminActionResult | AdminActionError;
@@ -33,6 +33,15 @@ type RoleOption = {
   value: AppRoleMetadata;
   label: string;
 };
+
+const ICON_MAP = {
+  users: Users,
+  store: Store,
+  bike: Bike,
+  shield: ShieldCheck,
+} as const;
+
+type IconId = keyof typeof ICON_MAP;
 
 type AdminUser = {
   id: string;
@@ -61,8 +70,19 @@ type CourierApplicationRow = ApplicationRowBase & {
   vehicleType: string | null;
 };
 
+type AdminStatCard = {
+  title: string;
+  value: string | number;
+  changeLabel?: string;
+  trend?: DashboardTrend;
+  iconId?: IconId;
+  accentGradient?: string;
+  backgroundGradient?: string;
+  description?: string;
+};
+
 export type AdminDashboardClientProps = {
-  stats: DashboardStatCardProps[];
+  stats: AdminStatCard[];
   vendorApplications: VendorApplicationRow[];
   courierApplications: CourierApplicationRow[];
   users: AdminUser[];
@@ -224,9 +244,22 @@ export function AdminDashboardClient({
         ) : null}
 
         <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((card) => (
-            <DashboardStatCard key={card.title} {...card} />
-          ))}
+          {stats.map((card) => {
+            const Icon = card.iconId ? ICON_MAP[card.iconId] : undefined;
+            return (
+              <DashboardStatCard
+                key={card.title}
+                title={card.title}
+                value={card.value}
+                changeLabel={card.changeLabel}
+                trend={card.trend}
+                icon={Icon}
+                accentGradient={card.accentGradient}
+                backgroundGradient={card.backgroundGradient}
+                description={card.description}
+              />
+            );
+          })}
         </section>
 
         <section className="mt-12 grid grid-cols-1 gap-6 xl:grid-cols-[2fr,1fr]">

@@ -1,7 +1,4 @@
-import { Users, Store, Bike, ShieldCheck } from 'lucide-react';
-
 import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient';
-import { DashboardStatCardProps } from '@/components/ui/dashboard';
 import { createAdminClient } from 'lib/supabase/admin';
 import { requireRole } from 'lib/auth/server-guard';
 
@@ -133,13 +130,17 @@ export default async function AdminDashboardPage() {
   const pendingCourier = courierApplications.filter((app) => app.status === 'pending').length;
   const newToday = countNewUsersToday(allUsers);
 
-  const stats: DashboardStatCardProps[] = [
+  const pendingVendorTrend = pendingVendor > 0 ? 'up' : 'down';
+  const pendingCourierTrend = pendingCourier > 0 ? 'up' : 'down';
+  const newTodayTrend = newToday > 0 ? 'up' : 'neutral';
+
+  const stats = [
     {
       title: 'Toplam Kullanıcı',
       value: totalUsers.toString(),
       changeLabel: `${pendingVendor + pendingCourier} bekleyen başvuru`,
       trend: 'up',
-      icon: Users,
+      iconId: 'users',
       accentGradient: 'from-orange-500 to-red-500',
       backgroundGradient: 'from-orange-50 to-red-50',
     },
@@ -147,8 +148,8 @@ export default async function AdminDashboardPage() {
       title: 'Bekleyen İşletme Başvurusu',
       value: pendingVendor.toString(),
       changeLabel: 'Vendor admin onayı bekliyor',
-      trend: pendingVendor > 0 ? 'up' : 'down',
-      icon: Store,
+      trend: pendingVendorTrend,
+      iconId: 'store',
       accentGradient: 'from-amber-500 to-orange-600',
       backgroundGradient: 'from-amber-50 to-orange-50',
     },
@@ -156,8 +157,8 @@ export default async function AdminDashboardPage() {
       title: 'Bekleyen Kurye Başvurusu',
       value: pendingCourier.toString(),
       changeLabel: 'Operasyon onayı bekliyor',
-      trend: pendingCourier > 0 ? 'up' : 'down',
-      icon: Bike,
+      trend: pendingCourierTrend,
+      iconId: 'bike',
       accentGradient: 'from-sky-500 to-blue-600',
       backgroundGradient: 'from-sky-50 to-blue-50',
     },
@@ -165,12 +166,12 @@ export default async function AdminDashboardPage() {
       title: 'Bugün Katılanlar',
       value: newToday.toString(),
       changeLabel: 'Son 24 saat',
-      trend: newToday > 0 ? 'up' : 'neutral',
-      icon: ShieldCheck,
+      trend: newTodayTrend,
+      iconId: 'shield',
       accentGradient: 'from-emerald-500 to-green-600',
       backgroundGradient: 'from-emerald-50 to-green-50',
     },
-  ];
+  ] satisfies AdminDashboardClientProps['stats'];
 
   return (
     <AdminDashboardClient

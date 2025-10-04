@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { extractRoleMetadata, resolveRoleRedirect } from 'lib/auth/roles';
 import { createClient } from 'lib/supabase/server';
 
 export default async function RegisterPage() {
@@ -13,7 +14,9 @@ export default async function RegisterPage() {
     } = await supabase!.auth.getUser();
 
     if (user) {
-      redirect('/');
+      const roleMetadata = extractRoleMetadata(user);
+      const { target } = resolveRoleRedirect(roleMetadata);
+      redirect(target);
     }
   }
 

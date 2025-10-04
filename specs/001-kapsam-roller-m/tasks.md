@@ -43,7 +43,10 @@
 - [X] T019 Implement the API route for order creation in `app/api/orders/route.ts` (add input validation, pricing safeguards, and tests).
 - [X] T046 [UI] Port the advanced landing experience with Supabase-backed search/filtering at `app/page.tsx`.
 - [ ] T047 [UI] Implement Supabase Auth login/register screens with email/password forms and error handling.
-- [ ] T048 [UX] Provide a role selection/onboarding step after login (customer/vendor/courier/admin) with redirect logic.
+- [ ] T048 [UX] Provide a role selection/onboarding step after login (customer/vendor/courier/admin) with redirect logic. *(See T048A–T048C)*
+- [ ] T048A Create `/onboarding/role` wizard that forces selection for users with `role = pending` and shows contextual CTAs per choice.
+- [ ] T048B Persist selections in Supabase (`users.role` + application tables) and refresh JWT claims so guards know the active role (extends Phase 1-lite claim mapping).
+- [ ] T048C Add Playwright coverage for login → role onboarding flow (customer happy-path) and update auth unit tests for claim refresh.
 
 ## Phase 3.4: Core Implementation (Vendor & Courier Panels)
 
@@ -58,6 +61,7 @@
 - [ ] T044 [Data] Wire vendor dashboard to Supabase (orders, menu management, realtime) after T022/T021.
 - [ ] T045 [Data] Wire courier dashboard to Supabase (tasks, shifts, location channel) after T022/T024.
 - [ ] T049 [Auth] Guard vendor/courier/admin routes with Supabase session/role checks and redirect unauthenticated users to login.
+- [ ] T050 [Data] Model vendor/courier onboarding applications (pending/approved) and wire role guards to respect approval state.
 
 ## Phase 3.5: Integration & Polish
 

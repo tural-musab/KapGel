@@ -51,6 +51,7 @@ export function RegisterForm({ supabaseReady }: Props) {
         options: {
           data: {
             full_name: form.fullName,
+            role: 'pending',
           },
           emailRedirectTo: `${window.location.origin}/login`,
         },

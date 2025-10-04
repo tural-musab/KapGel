@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { createClient } from 'lib/supabase/client';
+import { extractRoleMetadata, resolveRoleRedirect } from 'lib/auth/roles';
 
 type FormState = {
   email: string;
@@ -42,7 +43,7 @@ export function LoginForm({ supabaseReady }: Props) {
     setErrorMessage(null);
 
     try {
-      const { error } = await client.auth.signInWithPassword({
+      const { data, error } = await client.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       });
@@ -52,7 +53,10 @@ export function LoginForm({ supabaseReady }: Props) {
         return;
       }
 
-      router.push('/');
+      const roleMetadata = extractRoleMetadata(data.user);
+      const { target } = resolveRoleRedirect(roleMetadata);
+
+      router.push(target);
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.');

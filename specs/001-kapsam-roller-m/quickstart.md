@@ -55,9 +55,9 @@ npx web-push generate-vapid-keys
 ├── src/
 │   ├── app/
 │   │   ├── (customer)/              # Customer storefront & checkout flows
-│   │   ├── vendor/                  # Vendor admin dashboard (to be implemented)
+│   │   ├── vendor/                  # Vendor admin dashboard shell (mock data, guarded)
 │   │   ├── courier/                 # Courier workspace (to be implemented)
-│   │   ├── admin/                   # Reserved for future admin tools
+│   │   ├── admin/                   # Admin kontrol paneli (başvuru ve rol yönetimi)
 │   │   └── api/                     # Server actions & route handlers
 │   ├── components/                  # Planned shared UI widgets (placeholder: src/components/README.md)
 │   └── lib/                         # Client/server utilities (Supabase, RBAC, stores)
@@ -139,3 +139,14 @@ Refer to `spec.md` for product scope, `plan.md` for phase sequencing, and `tasks
 - **Documentation**: If you discover gaps, update the relevant document in `specs/001-kapsam-roller-m/` and log the change in the PR summary.
 
 Welcome aboard! Ship safely and keep the constitution checks green.
+
+---
+
+## 8. Admin Panel Workflows
+
+- **Giriş ve Yetkilendirme**: `/admin` rotası sadece Supabase oturumunda `role = 'admin'` olan kullanıcıları kabul eder. Guard, doğrulanmamış kullanıcıları `/login`, onboarding süreci tamamlanmamış kullanıcıları `/onboarding/role` adresine yönlendirir.
+- **Ön Koşul**: `.env.local` içinde `SUPABASE_SERVICE_ROLE_KEY` tanımlı olmalıdır; aksi halde panel yüklenirken hata fırlatılır.
+- **KPI Kartları**: Üst bölümde toplam kullanıcı sayısı, bekleyen vendor/kurye başvuruları ve son 24 saatte katılan kullanıcılar özetlenir. Değerler Supabase'den gerçek zamanlı alınır.
+- **Başvuru Yönetimi**: Vendor ve kurye tablolarında onay/ret butonlarına basıldığında ilgili başvuru kayıtları güncellenir ve kullanıcının rolü (`auth.users` + `public.users`) otomatik senkronize edilir. Red işlemi kullanıcı rolünü `pending` durumuna döndürür.
+- **Rol Güncellemeleri**: Kullanıcı tablosundaki seçim kutusuyla rol değiştirildiğinde, Supabase JWT metadata'sı ve ilişkili başvurular senkronize edilir. Admin bu ekrandan vendor/courier rollerini doğrudan atayabilir.
+- **Geri Bildirimler**: Tüm işlemler başarı/başarısızlık bantlarıyla geri bildirim verir; başarısız işlemler loglara (`console.error`) düşer ve tekrar denenebilir.

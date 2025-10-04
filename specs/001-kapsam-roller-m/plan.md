@@ -151,6 +151,7 @@ tests/
 - **Order API Hardening** (2025-10-04): `/api/orders` artık Zod doğrulamalarıyla birlikte normalize edilmiş cevap döndürüyor; integration/test güncellemeleri tamamlandı.
 - **Order Tracking Realtime** (2025-10-04): `/orders/[id]` Supabase Realtime ile statü güncelliyor, timeline bileşeni paylaşılan yüzeyden besleniyor.
 - **Admin Oversight Panel** (2025-10-05): `/admin` kontrol paneli, başvuru onayı ve rol yönetimi için stat kartları ve aksiyonlu tablolarla yayınlandı.
+- **Vendor Dashboard Data Pass** (2025-10-05): `/vendor/(dashboard)` Supabase siparişlerini ve KPI kartlarını gerçek verilerle gösteriyor; aksiyon butonları transition API’si ile entegrasyon bekliyor.
 - **Auth UX Backlog**: Login/register ve rol onboarding akışları henüz uygulanmadı; Phase 3.3 altında T047-T048 ile ele alınacak, ardından dashboard route guard'ları (T049) eklenerek erişim güvenceye alınacak. Onboarding, Supabase `users.role` alanının varsayılan `pending` değeriyle başlamalı; kullanıcı rol seçimini `/onboarding/role` sihirbazında tamamlayıp seçim vendor/courier ise `vendor_applications`/`courier_applications` tablolarına başvuru kaydı açılmalı. JWT claim'leri güncellenene kadar paneller erişime kapalı kalacak ve guard'lar kullanıcıyı onboarding adımına yönlendirecek.
 - **Landing Revamp**: Advanced landing sayfası port edildi; Supabase şehir/işletme verileriyle arama & filtreleme sağlanıyor (2025-xx-xx). Realtime/haroita entegrasyonu Phase 3.3 kapsamında devam edecek.
 

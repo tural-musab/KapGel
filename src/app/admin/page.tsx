@@ -1,18 +1,11 @@
-import { redirect } from 'next/navigation';
-
 import { Users, Store, Bike, ShieldCheck } from 'lucide-react';
 
 import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient';
 import { DashboardStatCardProps } from '@/components/ui/dashboard';
 import { createAdminClient } from 'lib/supabase/admin';
-import { createClient } from 'lib/supabase/server';
+import { requireRole } from 'lib/auth/server-guard';
 
 import type { AdminDashboardClientProps } from '@/components/admin/AdminDashboardClient';
-
-function extractRole(user: { user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> }): string | null {
-  const metadata = user.user_metadata?.role ?? user.app_metadata?.role ?? null;
-  return typeof metadata === 'string' ? metadata : null;
-}
 
 function normaliseUser(row: any) {
   return {
@@ -60,24 +53,7 @@ function countNewUsersToday(users: AdminDashboardClientProps['users']) {
 }
 
 export default async function AdminDashboardPage() {
-  const supabase = createClient();
-
-  if (!supabase) {
-    redirect('/login');
-  }
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    redirect('/login');
-  }
-
-  if (extractRole(user) !== 'admin') {
-    redirect('/');
-  }
+  await requireRole(['admin']);
 
   const adminClient = createAdminClient();
   if (!adminClient) {

@@ -52,15 +52,15 @@
 
 - [ ] T020 [P] Implement the vendor dashboard for managing orders at `app/vendor/(dashboard)/page.tsx`.
 - [ ] T021 [P] Implement the menu management CRUD page for vendors at `app/vendor/menu/page.tsx`.
-- [ ] T022 Implement the API route for order state transitions at `app/api/orders/[id]/transition/route.ts`.
+- [X] T022 Implement the API route for order state transitions at `app/api/orders/[id]/transition/route.ts`.
 - [ ] T023 [P] Implement the courier dashboard for managing shifts and tasks at `app/courier/page.tsx`.
 - [ ] T024 Implement the API route for courier location updates at `app/api/courier/location/route.ts`.
 - [ ] T041 [UI] Port shared dashboard components (stats cards, timelines, action buttons) from prototype into `src/components/ui/`.
 - [X] T042 [UI] Port vendor dashboard layout with mock data and hook it to shared components (depends on T041, blocked by T022/T021 for real data).
 - [ ] T043 [UI] Port courier dashboard layout with mock data and location placeholder (depends on T041, blocked by T041 and T024 for real data).
-- [ ] T044 [Data] Wire vendor dashboard to Supabase (orders, menu management, realtime) after T022/T021.
+- [X] T044 [Data] Wire vendor dashboard to Supabase (orders, menu management, realtime) after T022/T021.
 - [ ] T045 [Data] Wire courier dashboard to Supabase (tasks, shifts, location channel) after T022/T024.
-- [ ] T049 [Auth] Guard vendor/courier/admin routes with Supabase session/role checks and redirect unauthenticated users to login.
+- [X] T049 [Auth] Guard vendor/courier/admin routes with Supabase session/role checks and redirect unauthenticated users to login.
 - [ ] T050 [Data] Model vendor/courier onboarding applications (pending/approved) and wire role guards to respect approval state.
 
 ## Phase 3.4b: Admin Oversight
@@ -68,7 +68,7 @@
 - [X] T051 [Admin] Kurumsal KPI kartları, başvuru listeleri ve kullanıcı yönetimi tablosu ile `/admin` kontrol panelini oluştur.
 - [X] T052 [Admin] Vendor/kurye başvurularını onaylamak veya reddetmek için Supabase service-role destekli sunucu aksiyonlarını ekle.
 - [X] T053 [Admin] Kullanıcı rolü güncelleme kontrolleri ekleyip `auth.users` ve başvuru tablolarıyla otomatik senkronizasyon sağla.
-- [ ] T054 [Docs] Admin iş akışlarını ve yetkilendirme modelini dokümantasyona ekle (runbook/quickstart güncellemesi).
+- [X] T054 [Docs] Admin iş akışlarını ve yetkilendirme modelini dokümantasyona ekle (runbook/quickstart güncellemesi).
 
 ## Phase 3.5: Integration & Polish
 

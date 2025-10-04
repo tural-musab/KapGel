@@ -1,6 +1,10 @@
 import { Suspense } from 'react';
 
+import { cookies } from 'next/headers';
+
 import { LandingClient } from '@/components/landing/LandingClient';
+import { extractRoleMetadata, resolveRoleRedirect } from 'lib/auth/roles';
+import type { AppRoleMetadata, PrimaryRole } from 'lib/auth/roles';
 import { createClient } from 'lib/supabase/server';
 
 const FALLBACK_CITIES = [
@@ -39,24 +43,63 @@ const FALLBACK_VENDORS = [
   },
 ];
 
+type SessionDescriptor = {
+  role: AppRoleMetadata;
+  needsOnboarding: boolean;
+  target: string;
+  email: string | null;
+  resolvedRole: PrimaryRole | null;
+};
+
+function resolveMockSession(): SessionDescriptor | null {
+  const cookieStore = cookies();
+  const mockRole = cookieStore.get('x-mock-role')?.value;
+  const email = cookieStore.get('x-mock-email')?.value ?? null;
+
+  if (!mockRole) {
+    return null;
+  }
+
+  const roleValue = mockRole as AppRoleMetadata;
+  const { target, needsOnboarding, role } = resolveRoleRedirect(roleValue);
+
+  return {
+    role: roleValue,
+    needsOnboarding,
+    target,
+    email,
+    resolvedRole: role ?? null,
+  };
+}
+
 async function loadLandingData() {
   const supabase = createClient();
 
   if (!supabase) {
+    const mockSession = resolveMockSession();
     return {
       cities: FALLBACK_CITIES,
       vendors: FALLBACK_VENDORS,
       stats: { vendors: 500, customers: 50000, satisfaction: 97 },
       supabaseReady: false,
+      session:
+        mockSession ?? {
+          role: null,
+          needsOnboarding: false,
+          target: '/',
+          email: null,
+          resolvedRole: null,
+        },
     };
   }
 
-  const [{ data: citiesData }, { data: vendorsData }] = await Promise.all([
+  const [{ data: citiesData }, { data: vendorsData }, userResult] = await Promise.all([
     supabase.from('cities').select('id,name').order('name'),
     supabase
       .from('vendors')
       .select('id,name')
       .limit(12),
+    supabase.auth.getUser(),
   ]);
 
   const cities = (citiesData ?? []).map((city) => ({ id: city.id, name: city.name }));
@@ -71,6 +114,12 @@ async function loadLandingData() {
     cityName: null,
   }));
 
+  const sessionUser = userResult.data?.user ?? null;
+  const roleMetadata = extractRoleMetadata(sessionUser);
+  const { target, needsOnboarding, role } = resolveRoleRedirect(roleMetadata);
+
+  const mockSession = !sessionUser ? resolveMockSession() : null;
+
   return {
     cities: cities.length > 0 ? cities : FALLBACK_CITIES,
     vendors: vendors.length > 0 ? vendors : FALLBACK_VENDORS,
@@ -80,6 +129,14 @@ async function loadLandingData() {
       satisfaction: 97,
     },
     supabaseReady: Boolean(citiesData || vendorsData),
+    session:
+      mockSession ?? {
+        role: roleMetadata,
+        needsOnboarding,
+        target,
+        email: sessionUser?.email ?? null,
+        resolvedRole: role ?? null,
+      },
   };
 }
 

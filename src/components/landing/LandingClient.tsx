@@ -14,6 +14,7 @@ import {
 
 
 import { DashboardStatCard } from '@/components/ui/dashboard';
+import type { AppRoleMetadata, PrimaryRole } from 'lib/auth/roles';
 
 type LandingCity = {
   id: string;
@@ -41,6 +42,13 @@ export interface LandingClientProps {
   vendors: LandingVendor[];
   stats: LandingStats;
   supabaseReady: boolean;
+  session: {
+    role: AppRoleMetadata;
+    needsOnboarding: boolean;
+    target: string;
+    email: string | null;
+    resolvedRole: PrimaryRole | null;
+  };
 }
 
 const FALLBACK_FEATURES = [
@@ -58,7 +66,7 @@ const FALLBACK_FEATURES = [
   },
 ];
 
-export function LandingClient({ cities, vendors, stats, supabaseReady }: LandingClientProps) {
+export function LandingClient({ cities, vendors, stats, supabaseReady, session }: LandingClientProps) {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -81,15 +89,52 @@ export function LandingClient({ cities, vendors, stats, supabaseReady }: Landing
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-sm font-medium text-gray-600">
             <span className="text-orange-600">KapGel</span>
             <div className="flex items-center gap-3">
-              <Link href="/login" className="hover:text-orange-600">
-                Giriş Yap
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
-              >
-                Kayıt Ol
-              </Link>
+              {session.role ? (
+                session.needsOnboarding ? (
+                  <Link
+                    href="/onboarding/role"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
+                  >
+                    Rolünü Tamamla
+                  </Link>
+                ) : (
+                  <>
+                    <span className="hidden text-sm text-gray-500 sm:inline">{session.email ?? ''}</span>
+                    <Link
+                      href={session.target || '/'}
+                      className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-orange-600 shadow-sm transition hover:border-orange-400"
+                    >
+                      {session.resolvedRole === 'admin'
+                        ? 'Yönetim Paneli'
+                        : session.resolvedRole === 'vendor_admin'
+                          ? 'İşletme Paneli'
+                          : session.resolvedRole === 'courier'
+                            ? 'Kurye Paneli'
+                            : 'Rolünü Yönet'}
+                    </Link>
+                    <form action="/auth/signout" method="post">
+                      <button
+                        type="submit"
+                        className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
+                      >
+                        Çıkış
+                      </button>
+                    </form>
+                  </>
+                )
+              ) : (
+                <>
+                  <Link href="/login" className="hover:text-orange-600">
+                    Giriş Yap
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
+                  >
+                    Kayıt Ol
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

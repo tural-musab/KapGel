@@ -51,8 +51,8 @@ type SessionDescriptor = {
   resolvedRole: PrimaryRole | null;
 };
 
-function resolveMockSession(): SessionDescriptor | null {
-  const cookieStore = cookies();
+async function resolveMockSession(): Promise<SessionDescriptor | null> {
+  const cookieStore = await cookies();
   const mockRole = cookieStore.get('x-mock-role')?.value;
   const email = cookieStore.get('x-mock-email')?.value ?? null;
 
@@ -76,7 +76,7 @@ async function loadLandingData() {
   const supabase = createClient();
 
   if (!supabase) {
-    const mockSession = resolveMockSession();
+    const mockSession = await resolveMockSession();
     return {
       cities: FALLBACK_CITIES,
       vendors: FALLBACK_VENDORS,
@@ -118,7 +118,7 @@ async function loadLandingData() {
   const roleMetadata = extractRoleMetadata(sessionUser);
   const { target, needsOnboarding, role } = resolveRoleRedirect(roleMetadata);
 
-  const mockSession = !sessionUser ? resolveMockSession() : null;
+  const mockSession = !sessionUser ? await resolveMockSession() : null;
 
   return {
     cities: cities.length > 0 ? cities : FALLBACK_CITIES,

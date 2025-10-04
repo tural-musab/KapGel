@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -218,9 +219,48 @@ export function AdminDashboardClient({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50 pb-24 pt-20">
       <div className="mx-auto max-w-7xl px-6">
-        <header className="mb-10 flex flex-col gap-2">
-          <p className="text-sm font-medium text-orange-600">Yönetim Merkezi</p>
-          <h1 className="text-3xl font-bold text-gray-900">Platform Kontrol Paneli</h1>
+        <header className="mb-10 flex flex-col gap-4">
+          <nav className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/90 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-orange-600">Yönetim Merkezi</p>
+                <h1 className="text-xl font-semibold text-gray-900 md:text-2xl">Platform Kontrol Paneli</h1>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-orange-400 hover:text-orange-600"
+              >
+                Ana Sayfa
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-orange-400 hover:text-orange-600"
+              >
+                Oturum Değiştir
+              </Link>
+              <Link
+                href="/profile"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-orange-400 hover:text-orange-600"
+              >
+                Profil
+              </Link>
+              <form action="/auth/signout" method="post">
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-lg"
+                >
+                  Çıkış Yap
+                </button>
+              </form>
+            </div>
+          </nav>
+
           <p className="text-sm text-gray-600">
             Başvuruları yönetin, kullanıcı rollerini güncelleyin ve platform sağlığını tek ekrandan takip edin.
           </p>

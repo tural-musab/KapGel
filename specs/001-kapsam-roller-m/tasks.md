@@ -19,7 +19,7 @@
 - [X] T003 [P] Write Supabase schema SQL for all tables (users, vendors, orders, etc.) in `db/schema.sql`.
 - [X] T004 [P] Write Supabase RLS policies for all tables in `db/rls.sql`.
 - [X] T005 [P] Create a seed script `db/seed.mjs` to populate the database with sample data.
-- [X] T006 [P] Configure Drizzle ORM and create initial migration scripts in `db/migrations/`.
+- [X] T006 [P] Configure Supabase CLI workflows and create initial SQL migrations in `supabase/migrations/`.
 - [X] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
 - [X] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests.
 - [X] T009 [P] Create the basic application layout in `app/layout.tsx`.
@@ -90,7 +90,7 @@ Task: "Initialize Next.js 15 application..."
 Task: "Create PWA assets..."
 Task: "Write Supabase schema SQL..."
 Task: "Write Supabase RLS policies..."
-Task: "Configure Drizzle ORM..."
+Task: "Configure Supabase CLI migrations..."
 
 # Launch E2E test creation together:
 Task: "Write Playwright E2E test for the customer order flow..."

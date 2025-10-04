@@ -10,8 +10,8 @@ The MVP must deliver a web-only (PWA) experience that covers the entire order li
 ## Technical Context
 
 - **Language/Version**: TypeScript 5 on Next.js 15 (Node.js 20 runtime via Vercel default).
-- **Primary Dependencies**: Supabase JS SDK, Drizzle ORM (type inference only), Tailwind CSS 4, shadcn/ui (to be added), Zustand, Playwright, Vitest, MapLibre GL (not yet installed).
-- **Storage**: Supabase Postgres with schema defined in `db/schema.sql`, migrations under `db/migrations/`, and seed data in `db/seed.mjs`.
+- **Primary Dependencies**: Supabase JS SDK, Supabase CLI (migrations & type generation), Tailwind CSS 4, shadcn/ui (to be added), Zustand, Playwright, Vitest, MapLibre GL (not yet installed).
+- **Storage**: Supabase Postgres with schema managed in `supabase/migrations/`, canonical SQL snapshots in `db/schema.sql`, and seed data in `db/seed.mjs`.
 - **Testing**: Vitest unit tests (`tests/unit`), Playwright E2E suites (`tests/e2e`). Mevcut CI iş akışı `.github/workflows/ci.yml` lint, build ve test adımlarını çalıştırıyor.
 - **Target Platform**: Cross-platform browsers (PWA). Deployed via Vercel + Supabase.
 - **Project Type**: Monolithic web application (App Router) with shared server/client code inside `src/`.
@@ -65,9 +65,11 @@ src/
 db/
 ├── schema.sql
 ├── schema.ts
-├── migrations/
 ├── rls.sql
 └── seed.mjs
+
+supabase/
+└── migrations/
 
 tests/
 ├── e2e/*.spec.ts

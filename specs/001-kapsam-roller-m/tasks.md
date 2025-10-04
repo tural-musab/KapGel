@@ -63,6 +63,13 @@
 - [ ] T049 [Auth] Guard vendor/courier/admin routes with Supabase session/role checks and redirect unauthenticated users to login.
 - [ ] T050 [Data] Model vendor/courier onboarding applications (pending/approved) and wire role guards to respect approval state.
 
+## Phase 3.4b: Admin Oversight
+
+- [X] T051 [Admin] Kurumsal KPI kartları, başvuru listeleri ve kullanıcı yönetimi tablosu ile `/admin` kontrol panelini oluştur.
+- [X] T052 [Admin] Vendor/kurye başvurularını onaylamak veya reddetmek için Supabase service-role destekli sunucu aksiyonlarını ekle.
+- [X] T053 [Admin] Kullanıcı rolü güncelleme kontrolleri ekleyip `auth.users` ve başvuru tablolarıyla otomatik senkronizasyon sağla.
+- [ ] T054 [Docs] Admin iş akışlarını ve yetkilendirme modelini dokümantasyona ekle (runbook/quickstart güncellemesi).
+
 ## Phase 3.5: Integration & Polish
 
 - [ ] T025 [P] Implement Web Push notification subscription logic in `components/PushManager.tsx`.

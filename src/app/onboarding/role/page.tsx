@@ -28,7 +28,7 @@ export default async function RoleOnboardingPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-white to-red-50 p-6">
-      <RoleOnboardingClient email={user.email ?? ''} />
+      <RoleOnboardingClient email={user.email ?? ''} initialRole={roleMetadata} />
     </main>
   );
 }

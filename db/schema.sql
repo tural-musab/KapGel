@@ -1,6 +1,6 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role TEXT NOT NULL CHECK (role IN ('customer', 'vendor_admin', 'courier', 'admin')),
+    role TEXT NOT NULL DEFAULT 'pending' CHECK (role IN ('pending', 'customer', 'vendor_admin', 'courier', 'admin', 'vendor_admin_pending', 'courier_pending')),
     phone TEXT UNIQUE,
     email TEXT UNIQUE,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -109,6 +109,28 @@ CREATE TABLE notifications (
     channel notification_channel NOT NULL,
     token_or_addr TEXT NOT NULL,
     is_active BOOLEAN DEFAULT true
+);
+
+CREATE TYPE application_status AS ENUM ('pending', 'approved', 'rejected');
+
+CREATE TABLE vendor_applications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    business_name TEXT,
+    status application_status NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (user_id)
+);
+
+CREATE TABLE courier_applications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    vehicle_type TEXT,
+    status application_status NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (user_id)
 );
 
 CREATE TYPE plan_type AS ENUM ('fixed', 'revenue_target');

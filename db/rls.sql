@@ -16,6 +16,8 @@ ALTER TABLE courier_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE districts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE neighborhoods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vendor_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE courier_applications ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to get user role
 CREATE OR REPLACE FUNCTION get_my_role() RETURNS TEXT AS $$
@@ -27,6 +29,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- USERS
 CREATE POLICY "Users can view their own data" ON users FOR SELECT USING (id = auth.uid());
 CREATE POLICY "Users can update their own data" ON users FOR UPDATE USING (id = auth.uid());
+CREATE POLICY "Users can insert their own data" ON users FOR INSERT WITH CHECK (id = auth.uid());
 
 -- VENDORS
 CREATE POLICY "Admins can manage vendors" ON vendors FOR ALL USING (get_my_role() = 'admin');
@@ -132,3 +135,13 @@ CREATE POLICY "Vendor admins can manage their own inventories" ON inventories FO
 
 -- Default DENY
 -- (No explicit DENY needed, RLS defaults to deny)
+
+-- VENDOR APPLICATIONS
+CREATE POLICY "Users can view their vendor applications" ON vendor_applications FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert vendor applications" ON vendor_applications FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Admins can manage vendor applications" ON vendor_applications FOR ALL USING (get_my_role() = 'admin');
+
+-- COURIER APPLICATIONS
+CREATE POLICY "Users can view their courier applications" ON courier_applications FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert courier applications" ON courier_applications FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Admins can manage courier applications" ON courier_applications FOR ALL USING (get_my_role() = 'admin');

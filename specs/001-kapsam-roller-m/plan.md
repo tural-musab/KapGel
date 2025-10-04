@@ -41,7 +41,7 @@ specs/001-kapsam-roller-m/
 ├── research.md      # ✅ Completed 2025-09-30 – integration studies & constitution mitigation actions
 ├── data-model.md    # ✅ Completed 2025-09-30 – schema, lifecycle, access controls
 ├── quickstart.md    # ✅ Completed 2025-09-30 – onboarding & workflow guide
-├── contracts/       # ❌ Missing – to be produced in Phase 1 (REST/OpenAPI + tests)
+├── contracts/       # 🟡 Phase 1-lite drafts (orders, courier, vendor APIs) – full OpenAPI + contract tests pending
 └── tasks.md         # Existing tasks backlog (requires revision after Phase 1)
 ```
 
@@ -109,6 +109,7 @@ tests/
      - Courier availability & location (`POST /api/courier/shifts`, `POST /api/courier/location`).
      - Notification subscriptions (`POST /api/notifications/subscribe`).
    - Provide OpenAPI spec or typed contract files, plus contract tests in `tests/contract/` that currently fail.
+   - 🟡 **Status**: Phase 1-lite markdown drafts committed (orders, courier, vendor). Full OpenAPI schemas + failing contract tests still TODO.
 
 3. **Frontend Design Docs** (`quickstart.md`)
    - Outline component hierarchy per role, data fetching strategy (server/client components), and routing map.
@@ -120,7 +121,7 @@ tests/
    - Update `lib/rbac.ts` design with mapping from Supabase JWT claims → role guards.
    - Outline logging strategy (structured events, telemetry endpoints) and error reporting flows.
    - Document monitoring/alerting approach using Supabase + third-party tooling.
-   - ✅ **Status**: Mitigation roadmap captured in `research.md`; implementation pending.
+   - 🟡 **Status**: Mitigation roadmap captured in `research.md`; Phase 1-lite closure checklist drafted (`contracts/phase1-lite-checklist.md`). Structured logging helper landed in `lib/logging.ts`; remaining telemetry/integration work pending.
 
 5. **Re-evaluate Constitution Check**
    - Confirm RLS coverage, performance budgets, accessibility plan, and observability instrumentation are defined.
@@ -144,6 +145,11 @@ tests/
 
 - **Initial Constitution Check**: Failing (security, performance, accessibility, observability gaps) — must be resolved in Phase 1.
 - **Post-Design Constitution Check**: Documentation and mitigation plans delivered (2025-09-30); awaiting technical execution to mark as Pass.
+- **Phase 1-lite Kick-off**: API contract markdown drafts merged (orders, courier, vendor). Next actions: generate OpenAPI + failing contract tests, then close remaining constitution gaps.
+- **Order API Hardening** (2025-10-04): `/api/orders` artık Zod doğrulamalarıyla birlikte normalize edilmiş cevap döndürüyor; integration/test güncellemeleri tamamlandı.
+- **Order Tracking Realtime** (2025-10-04): `/orders/[id]` Supabase Realtime ile statü güncelliyor, timeline bileşeni paylaşılan yüzeyden besleniyor.
+- **Auth UX Backlog**: Login/register ve rol onboarding akışları henüz uygulanmadı; Phase 3.3 altında T047-T048 ile ele alınacak, ardından dashboard route guard'ları (T049) eklenerek erişim güvenceye alınacak.
+- **Landing Revamp**: Advanced landing sayfası port edildi; Supabase şehir/işletme verileriyle arama & filtreleme sağlanıyor (2025-xx-xx). Realtime/haroita entegrasyonu Phase 3.3 kapsamında devam edecek.
 
 ## Complexity & Risk Notes
 

@@ -1,5 +1,5 @@
 {
-  "name": "temp-next-app",
+  "name": "kap-gel",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -31,6 +31,7 @@
     "react-dom": "19.1.0",
     "tailwindcss-animate": "^1.0.7",
     "vitest": "^3.2.4",
+    "zod": "^4.1.11",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

@@ -75,7 +75,21 @@ describe('POST /api/orders', () => {
     const response = await POST(buildRequest(basePayload));
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(orderResponse);
+    await expect(response.json()).resolves.toEqual({
+      order: {
+        id: 'order-1',
+        status: 'pending',
+        customerId: undefined,
+        branchId: undefined,
+        courierId: undefined,
+        paymentMethod: undefined,
+        itemsTotal: 0,
+        deliveryFee: 0,
+        total: 0,
+        createdAt: undefined,
+      },
+      items: [],
+    });
 
     expect(rpcMock).toHaveBeenCalledWith('create_order_with_items', {
       order_input: expectedOrderInput,
@@ -88,13 +102,23 @@ describe('POST /api/orders', () => {
       order: {
         id: 'order-1',
         customer_id: 'user-1',
+        branch_id: 'branch-1',
+        courier_id: null,
+        status: 'PREPARING',
+        payment_method: 'cash',
+        items_total: 20,
+        delivery_fee: 0,
+        total: 20,
+        created_at: '2025-01-01T10:00:00Z',
       },
       items: [
         {
           id: 'order-item-1',
-          order_id: 'order-1',
           product_id: 'item-1',
+          name_snapshot: 'Item 1',
+          unit_price: 10,
           qty: 2,
+          total: 20,
         },
       ],
     };
@@ -104,7 +128,43 @@ describe('POST /api/orders', () => {
     const response = await POST(buildRequest(basePayload));
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(supabasePayload);
+    await expect(response.json()).resolves.toEqual({
+      order: {
+        id: 'order-1',
+        status: 'preparing',
+        customerId: 'user-1',
+        branchId: 'branch-1',
+        courierId: null,
+        paymentMethod: 'cash',
+        itemsTotal: 20,
+        deliveryFee: 0,
+        total: 20,
+        createdAt: '2025-01-01T10:00:00Z',
+      },
+      items: [
+        {
+          id: 'order-item-1',
+          productId: 'item-1',
+          name: 'Item 1',
+          qty: 2,
+          unitPrice: 10,
+          total: 20,
+        },
+      ],
+    });
+  });
+
+  it('rejects empty item list with 400', async () => {
+    const response = await POST(
+      buildRequest({
+        ...basePayload,
+        items: [],
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.text()).resolves.toBe('En az bir ürün seçmelisiniz');
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 
   it('returns 500 when RPC fails and surfaces an error message', async () => {

@@ -1,25 +1,19 @@
+import { notFound } from 'next/navigation';
+
+import { OrderTrackingClient, type OrderStatus } from '@/components/orders/OrderTrackingClient';
 import { createClient } from 'lib/supabase/server';
 
-import type { ComponentProps } from 'react';
-
-type OrderItem = {
-  id: string;
-  qty: number;
-  unit_price: number;
-  products: {
-    name: string;
-  } | null;
+const statusMap: Record<string, OrderStatus> = {
+  NEW: 'pending',
+  CONFIRMED: 'pending',
+  PREPARING: 'preparing',
+  PICKED_UP: 'ready',
+  ON_ROUTE: 'en_route',
+  DELIVERED: 'delivered',
+  REJECTED: 'cancelled',
+  CANCELED_BY_USER: 'cancelled',
+  CANCELED_BY_VENDOR: 'cancelled',
 };
-
-type Order = {
-  id: string;
-  status: string;
-  total: number;
-  order_items: OrderItem[] | null;
-};
-
-// TODO: Replace with shadcn/ui components
-const Card = (props: ComponentProps<'div'>) => <div {...props} />;
 
 export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,59 +21,46 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
 
   if (!supabase) {
     return (
-      <div className="container mx-auto p-4">
-        <p className="text-center text-sm text-gray-500">
-          Supabase yapılandırması bulunamadığı için sipariş bilgilerine ulaşılamıyor.
-        </p>
-      </div>
+      <OrderTrackingClient
+        orderId={id}
+        initialStatus="pending"
+        items={[]}
+        total={0}
+        supabaseReady={false}
+      />
     );
   }
 
-  const { data: order } = await supabase
+  const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*, products(*))')
+    .select('id,status,total,order_items(id, qty, unit_price, total, products(name))')
     .eq('id', id)
-    .single<Order>();
+    .maybeSingle();
 
-  if (!order) {
-    return <div>Order not found</div>;
+  if (error || !data) {
+    notFound();
   }
 
+  const status = statusMap[data.status ?? 'NEW'] ?? 'pending';
+  const items = (data.order_items ?? []).map((item) => {
+    const product = Array.isArray(item.products) ? item.products[0] : item.products;
+    return {
+      id: item.id,
+      name: product?.name ?? null,
+      qty: item.qty ?? 0,
+      unitPrice: typeof item.unit_price === 'number' ? item.unit_price : Number(item.unit_price ?? 0),
+      total: typeof item.total === 'number' ? item.total : Number(item.total ?? 0),
+    };
+  });
+  const total = typeof data.total === 'number' ? data.total : Number(data.total ?? 0);
+
   return (
-    <div className="container mx-auto p-4">
-      <header className="my-8">
-        <h1 className="text-4xl font-bold">Sipariş Takibi</h1>
-        <p>Sipariş ID: {order.id}</p>
-      </header>
-
-      <main>
-        <Card className="border rounded-lg p-4">
-          <h2 className="text-2xl font-semibold mb-4">Sipariş Durumu: {order.status}</h2>
-          {/* TODO: Add a map component to show courier location */}
-        </Card>
-
-        <Card className="border rounded-lg p-4 mt-8">
-          <h2 className="text-2xl font-semibold mb-4">Sipariş Detayları</h2>
-          <ul>
-            {order.order_items?.map((item) => (
-              <li key={item.id} className="flex justify-between items-center mb-2">
-                <div>
-                  <p className="font-bold">{item.products?.name}</p>
-                  <p>
-                    {item.qty} x {item.unit_price} TL
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-lg font-bold flex justify-between">
-              <span>Toplam:</span>
-              <span>{order.total} TL</span>
-            </p>
-          </div>
-        </Card>
-      </main>
-    </div>
+    <OrderTrackingClient
+      orderId={data.id}
+      initialStatus={status}
+      items={items}
+      total={total}
+      supabaseReady
+    />
   );
 }

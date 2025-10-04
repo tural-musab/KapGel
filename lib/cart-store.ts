@@ -39,3 +39,7 @@ export const useCartStore = create<CartState>((set) => ({
     })),
   clearCart: () => set({ items: [] }),
 }));
+
+if (typeof window !== 'undefined') {
+  (window as unknown as { __cartStore?: typeof useCartStore }).__cartStore = useCartStore;
+}

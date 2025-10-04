@@ -3,6 +3,15 @@
 **Input**: Design details from /plan command arguments
 **Prerequisites**: User-provided context
 
+## Phase 1-lite: Minimal Contracts & Constitution Prep
+
+- [X] T034 [P] Create `specs/001-kapsam-roller-m/contracts/` and scaffold contract documentation.
+- [X] T035 [P] Draft customer orders API contract (markdown).
+- [X] T036 Draft courier API contract (markdown).
+- [X] T037 Draft vendor API contract (markdown).
+- [X] T038 Outline failing contract test stubs under `tests/contract/` for orders, vendor, courier.
+- [X] T039 Summarise RLS/RBAC and observability closure checklist for Phase 1 sign-off.
+
 ## Phase 3.1: Setup & Foundation
 
 - [X] T001 [P] Initialize Next.js 15 application with TypeScript, Tailwind CSS, and shadcn/ui.
@@ -29,9 +38,12 @@
 - [X] T014 [P] Implement the city selection and vendor search page at `app/page.tsx`.
 - [X] T015 [P] Implement the vendor menu page at `app/vendors/[slug]/page.tsx`.
 - [X] T016 [P] Implement the shopping cart state management using Zustand in `lib/cart-store.ts`.
-- [X] T017 [P] Implement the checkout page at `app/(customer)/checkout/page.tsx` with address and payment options.
-- [X] T018 [P] Implement the order tracking page at `app/orders/[id]/page.tsx`.
-- [X] T019 Implement the API route for order creation in `app/api/orders/route.ts`.
+- [X] T017 [P] Implement the checkout page at `app/(customer)/checkout/page.tsx` with address and payment options (Phase 3 skeleton; wire to Supabase order RPC and validations).
+- [X] T018 [P] Implement the order tracking page at `app/orders/[id]/page.tsx` (add realtime updates, status timeline, map integration hooks).
+- [X] T019 Implement the API route for order creation in `app/api/orders/route.ts` (add input validation, pricing safeguards, and tests).
+- [X] T046 [UI] Port the advanced landing experience with Supabase-backed search/filtering at `app/page.tsx`.
+- [ ] T047 [UI] Implement Supabase Auth login/register screens with email/password forms and error handling.
+- [ ] T048 [UX] Provide a role selection/onboarding step after login (customer/vendor/courier/admin) with redirect logic.
 
 ## Phase 3.4: Core Implementation (Vendor & Courier Panels)
 
@@ -40,6 +52,12 @@
 - [ ] T022 Implement the API route for order state transitions at `app/api/orders/[id]/transition/route.ts`.
 - [ ] T023 [P] Implement the courier dashboard for managing shifts and tasks at `app/courier/page.tsx`.
 - [ ] T024 Implement the API route for courier location updates at `app/api/courier/location/route.ts`.
+- [ ] T041 [UI] Port shared dashboard components (stats cards, timelines, action buttons) from prototype into `src/components/ui/`.
+- [X] T042 [UI] Port vendor dashboard layout with mock data and hook it to shared components (depends on T041, blocked by T022/T021 for real data).
+- [ ] T043 [UI] Port courier dashboard layout with mock data and location placeholder (depends on T041, blocked by T041 and T024 for real data).
+- [ ] T044 [Data] Wire vendor dashboard to Supabase (orders, menu management, realtime) after T022/T021.
+- [ ] T045 [Data] Wire courier dashboard to Supabase (tasks, shifts, location channel) after T022/T024.
+- [ ] T049 [Auth] Guard vendor/courier/admin routes with Supabase session/role checks and redirect unauthenticated users to login.
 
 ## Phase 3.5: Integration & Polish
 

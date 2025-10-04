@@ -1,86 +1,33 @@
-'use client';
+import { CheckoutClient } from '@/components/checkout/CheckoutClient';
+import { createClient } from 'lib/supabase/server';
 
-import { useCartStore } from 'lib/cart-store';
+const FALLBACK_BRANCHES = [
+  {
+    id: 'fallback-branch-1',
+    name: 'Merkez Şube',
+    vendorName: 'KapGel Demo',
+  },
+];
 
-import type { ComponentProps } from 'react';
+export default async function CheckoutPage() {
+  const supabase = createClient();
 
-// TODO: Replace with shadcn/ui components
-const Card = (props: ComponentProps<'div'>) => <div {...props} />;
-const Button = (props: ComponentProps<'button'>) => <button {...props} />;
-const Input = (props: ComponentProps<'input'>) => <input {...props} />;
-const Label = (props: ComponentProps<'label'>) => <label {...props} />;
+  if (!supabase) {
+    return <CheckoutClient branches={FALLBACK_BRANCHES} supabaseReady={false} />;
+  }
 
-export default function CheckoutPage() {
-  const { items, removeItem, clearCart } = useCartStore();
+  const { data, error } = await supabase
+    .from('branches')
+    .select('id,name,vendors(name)')
+    .limit(20);
 
-  const total = items.reduce((acc: number, item: { price: number; quantity: number; }) => acc + item.price * item.quantity, 0);
+  const branches = !error && Array.isArray(data) && data.length > 0
+    ? data.map((branch) => ({
+        id: branch.id,
+        name: branch.name ?? 'Şube',
+        vendorName: (branch as { vendors?: { name?: string } | null })?.vendors?.name ?? undefined,
+      }))
+    : FALLBACK_BRANCHES;
 
-  const handlePlaceOrder = () => {
-    // TODO: Implement order creation logic (T019)
-    alert('Siparişiniz alındı!');
-    clearCart();
-  };
-
-  return (
-    <div className="container mx-auto p-4">
-      <header className="my-8">
-        <h1 className="text-4xl font-bold">Checkout</h1>
-      </header>
-
-      <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Sipariş Özeti</h2>
-          <Card className="border rounded-lg p-4">
-            {items.length === 0 ? (
-              <p>Sepetiniz boş.</p>
-            ) : (
-              <ul>
-                {items.map((item) => (
-                  <li key={item.id} className="flex justify-between items-center mb-2">
-                    <div>
-                      <p className="font-bold">{item.name}</p>
-                      <p>{item.quantity} x {item.price} TL</p>
-                    </div>
-                    <Button onClick={() => removeItem(item.id)} className="text-red-500">Kaldır</Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-lg font-bold flex justify-between">
-                <span>Toplam:</span>
-                <span>{total} TL</span>
-              </p>
-            </div>
-          </Card>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Teslimat Bilgileri</h2>
-          <form className="space-y-4">
-            <div>
-              <Label htmlFor="address">Adres</Label>
-              <Input id="address" type="text" placeholder="Teslimat adresi" className="w-full p-2 border rounded" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Ödeme Yöntemi</h3>
-              <div className="flex gap-4 mt-2">
-                <Label className="flex items-center gap-2">
-                  <Input type="radio" name="payment" value="cash" defaultChecked />
-                  Kapıda Nakit
-                </Label>
-                <Label className="flex items-center gap-2">
-                  <Input type="radio" name="payment" value="card_on_pickup" />
-                  Gel-Al&apos;da Kart
-                </Label>
-              </div>
-            </div>
-            <Button type="button" onClick={handlePlaceOrder} className="w-full bg-green-500 text-white p-2 rounded">
-              Siparişi Tamamla
-            </Button>
-          </form>
-        </div>
-      </main>
-    </div>
-  );
+  return <CheckoutClient branches={branches} supabaseReady={!error && data != null} />;
 }

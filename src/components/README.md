@@ -1,11 +1,18 @@
 # Components Directory (Planned)
 
-This folder is reserved for shared React components that will be implemented in upcoming iterations of the KapGel MVP.
+This folder contains shared React components that can be reused across the KapGel MVP.
 
-Planned contents include:
+## Dashboard primitives (`./ui/dashboard`)
+
+- `DashboardStatCard` – gradient metrik kartları; vendor ve courier panellerinde tekrar kullanılabilir.
+- `OrderStatusBadge` – sipariş durumlarını tutarlı rozetlerle gösterir.
+- `OrderActionButton` – sipariş akışındaki eylemler için tek tip buton stili sağlar.
+- `OrderTimeline` – dikey durum akışı bileşeni; müşteri takibi veya dashboardlarda kullanılabilir.
+
+## Planned additions
 
 - Map display primitives (MapLibre wrappers, delivery zone overlays).
 - Push notification helpers (subscription prompts, VAPID key integration).
 - PWA affordances (install banners, offline state indicators).
 
-Until the components are built, the folder intentionally remains empty aside from this placeholder. When adding new UI building blocks, colocate them here and document their responsibilities in this file so other contributors understand the shared surface area.
+Yeni bileşenler eklerken bu dosyayı güncelleyerek sorumluluklarını özetleyin ki ekip arkadaşları paylaşılan yüzeyi kolayca keşfedebilsin.

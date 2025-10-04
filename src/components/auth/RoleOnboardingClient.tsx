@@ -83,7 +83,7 @@ export function RoleOnboardingClient({ email, initialRole }: RoleOnboardingClien
 
       const payload = (await response.json()) as { metadataRole?: string | null };
       const metadataRole = (payload.metadataRole ?? toPendingMetadata(normalizedRole)) as AppRoleMetadata;
-      const { target, needsOnboarding } = resolveRoleRedirect(metadataRole);
+      const { target } = resolveRoleRedirect(metadataRole);
 
       if (metadataRole === 'vendor_admin_pending') {
         setInfoMessage('İşletme başvurun alındı. Yönetici onayı sonrasında işletme paneline yönlendirileceksin.');
@@ -93,10 +93,7 @@ export function RoleOnboardingClient({ email, initialRole }: RoleOnboardingClien
         setInfoMessage('Kurye başvurun alındı. Operasyon ekibi onayladıktan sonra kurye paneline erişebileceksin.');
       }
 
-      if (!needsOnboarding) {
-        router.push(target);
-      }
-
+      router.push(target);
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.');

@@ -4,20 +4,26 @@ import { RegisterForm } from '@/components/auth/RegisterForm';
 import { extractRoleMetadata, resolveRoleRedirect } from 'lib/auth/roles';
 import { createClient } from 'lib/supabase/server';
 
-export default async function RegisterPage() {
+async function loadUserSession() {
   const supabase = createClient();
-  const supabaseReady = Boolean(supabase);
+  if (!supabase) {
+    return { supabaseReady: false, user: null } as const;
+  }
 
-  if (supabaseReady) {
-    const {
-      data: { user },
-    } = await supabase!.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (user) {
-      const roleMetadata = extractRoleMetadata(user);
-      const { target } = resolveRoleRedirect(roleMetadata);
-      redirect(target);
-    }
+  return { supabaseReady: true, user } as const;
+}
+
+export default async function RegisterPage() {
+  const { supabaseReady, user } = await loadUserSession();
+
+  if (user) {
+    const roleMetadata = extractRoleMetadata(user);
+    const { target } = resolveRoleRedirect(roleMetadata);
+    redirect(target);
   }
 
   return (

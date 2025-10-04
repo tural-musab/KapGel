@@ -244,12 +244,6 @@ export function AdminDashboardClient({
               >
                 Oturum Değiştir
               </Link>
-              <Link
-                href="/profile"
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-orange-400 hover:text-orange-600"
-              >
-                Profil
-              </Link>
               <form action="/auth/signout" method="post">
                 <button
                   type="submit"

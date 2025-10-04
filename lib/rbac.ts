@@ -131,7 +131,7 @@ export async function getVendorAuthContext(options: VendorAuthContextOptions = {
           .filter((value): value is string => typeof value === 'string' && value.length > 0);
         return { vendorIds: normalizeIds(vendorIds) };
       }
-    } catch (error) {
+    } catch {
       // ignore and fall through to empty vendor list
     }
   }
@@ -162,7 +162,7 @@ export async function getCourierAuthContext(options: CourierAuthContextOptions =
         return { courierId: courierRow.id };
       }
     }
-  } catch (error) {
+  } catch {
     // ignore errors and fall through
   }
 

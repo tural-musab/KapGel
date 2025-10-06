@@ -93,23 +93,40 @@ Yeni bir developer için:
   pnpm test:contract -- vendor-api
   ```
 
-### Track 3: Menu Management 📝 (PARALLEL)
-- [ ] **T021-1:** `app/vendor/menu/page.tsx` oluştur
+### Track 3: Menu Management 📝 (PARALLEL) ✅
+- [X] **T021-1:** `app/vendor/menu/page.tsx` oluşturuldu ✅
   - 📖 Contract: `specs/001-kapsam-roller-m/contracts/vendor-api.md`
-  - ⏱️ Süre: 3 gün
+  - ⏱️ Tamamlandı: 2025-10-06
+  - ✓ Product grid with search
+  - ✓ Bulk selection & actions
+  - ✓ Individual product management
   
-- [ ] **T021-2:** Products CRUD API integration
+- [X] **T021-2:** Products CRUD API integration ✅
   - 📖 Contract: Section "Products Management"
-  - POST /api/vendor/products
-  - PUT /api/vendor/products/:id
-  - DELETE /api/vendor/products/:id
+  - 📁 Files:
+    * `src/app/api/vendor/products/route.ts` (GET list, POST create)
+    * `src/app/api/vendor/products/[id]/route.ts` (PUT update, DELETE)
+  - ✓ Full CRUD operations
+  - ✓ Name uniqueness validation
+  - ✓ Category ownership validation
+  - ✓ Soft delete with pending order check
   
-- [ ] **T021-3:** Bulk availability toggle ekle
+- [X] **T021-3:** Bulk availability toggle eklendi ✅
   - 📖 Contract: Section "POST /api/vendor/products/bulk-availability"
+  - 📁 File: `src/app/api/vendor/products/bulk-availability/route.ts`
+  - ✓ Bulk enable/disable products
+  - ✓ Ownership verification
+  - ✓ Max 100 products per request
   
-- [ ] **T021-4:** Image upload için placeholder ekle (Phase 2'de real upload)
+- [X] **T021-4:** Image upload placeholder eklendi ✅
+  - ✓ UI shows placeholder for missing images
+  - ✓ photo_url field in API
+  - ⚠️ Real upload Phase 2
   
-- [ ] **T021-5:** Validation feedback göster (Zod schemas kullan)
+- [X] **T021-5:** Validation feedback gösteriliyor ✅
+  - ✓ Zod schemas in all APIs
+  - ✓ Detailed error responses
+  - ✓ Field-level validation messages
 
 ---
 

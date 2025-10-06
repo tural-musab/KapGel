@@ -43,11 +43,11 @@ type DashboardStats = {
 
 type Order = {
   id: string;
-  status: string;
+  status: string; // Non-null, defaults to 'NEW'
   total: number;
-  created_at: string;
+  created_at: string; // Non-null, ISO format
   address_text: string | null;
-  branch_id: string;
+  branch_id: string; // Non-null
   order_items: Array<{
     name_snapshot: string | null;
     qty: number | null;

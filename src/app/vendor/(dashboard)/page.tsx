@@ -91,6 +91,9 @@ export default async function VendorDashboardPage() {
   // Convert orders to proper format
   const formattedOrders = orders.map((order) => ({
     ...order,
+    status: order.status || 'NEW', // Ensure non-null status
+    created_at: order.created_at || new Date().toISOString(), // Ensure non-null date
+    branch_id: order.branch_id || '', // Ensure non-null branch_id
     total: toNumber(order.total),
   }));
 

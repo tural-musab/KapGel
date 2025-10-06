@@ -1,33 +1,79 @@
-import { ClipboardList, MapPinned } from 'lucide-react';
+/**
+ * Courier Dashboard Page
+ * 
+ * Server Component that fetches courier data and renders client dashboard
+ */
 
 import { requireRole } from 'lib/auth/server-guard';
+import { CourierDashboardClient } from '@/components/courier/DashboardClient';
 
-export default async function CourierDashboardPlaceholder() {
-  await requireRole(['courier', 'admin']);
+type CourierRow = {
+  id: string;
+  user_id: string;
+  shift_status: 'online' | 'offline';
+  vehicle_type: string | null;
+};
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6">
-      <div className="max-w-2xl rounded-3xl border border-sky-100 bg-white/90 p-10 text-center shadow-xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-          <MapPinned className="h-8 w-8" />
-        </div>
-        <h1 className="mt-6 text-3xl font-bold text-gray-900">Kurye Paneli Çok Yakında</h1>
-        <p className="mt-4 text-sm text-gray-600">
-          Vardiya yönetimi, görev atamaları ve canlı konum paylaşımı üzerinde çalışıyoruz. Bu sayfa yalnızca yetkili
-          kurye/admin hesapları tarafından görülebilir.
-        </p>
-        <div className="mt-8 rounded-2xl border border-dashed border-sky-200 bg-sky-50/70 p-6 text-sm text-sky-700">
-          <div className="flex items-center justify-center gap-2 font-medium text-sky-900">
-            <ClipboardList className="h-4 w-4" />
-            Sıradaki adımlar
-          </div>
-          <ul className="mt-3 space-y-2 text-left">
-            <li>• Vardiya aç/kapat modülü</li>
-            <li>• Görev kabul/teslim akışı</li>
-            <li>• Realtime konum paylaşımı ve rota görünümü</li>
-          </ul>
+type OrderRow = {
+  id: string;
+  status: string;
+  total: number | string;
+  created_at: string;
+  address_text: string | null;
+  branch_id: string;
+  customer_id: string;
+};
+
+function toNumber(value: number | string | null | undefined) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
+export default async function CourierDashboardPage() {
+  const { supabase, user } = await requireRole(['courier', 'admin']);
+
+  // Get courier data
+  const { data: courierData, error: courierError } = await supabase
+    .from('couriers')
+    .select('id, user_id, shift_status, vehicle_type')
+    .eq('user_id', user.id)
+    .single<CourierRow>();
+
+  if (courierError || !courierData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
+          <h1 className="text-2xl font-bold text-gray-900">Courier Profile Not Found</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            No courier profile found for your account. Please contact support.
+          </p>
         </div>
       </div>
-    </main>
+    );
+  }
+
+  // Get assigned orders
+  const { data: ordersData } = await supabase
+    .from('orders')
+    .select('id, status, total, created_at, address_text, branch_id, customer_id')
+    .eq('courier_id', courierData.id)
+    .in('status', ['READY', 'PICKED_UP', 'ON_ROUTE', 'DELIVERED'])
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const orders = (ordersData || []) as OrderRow[];
+
+  // Format orders
+  const formattedOrders = orders.map((order) => ({
+    ...order,
+    total: toNumber(order.total),
+  }));
+
+  return (
+    <CourierDashboardClient courier={courierData} assignedOrders={formattedOrders} />
   );
 }

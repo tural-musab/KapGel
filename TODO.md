@@ -57,7 +57,7 @@ Yeni bir developer için:
   - 📖 RLS: `db/rls-complete.sql` (courier_locations policies)
   - ✓ shift_status = 'online' validation
   
-- [ ] **T024-5:** Contract testleri çalıştır ve geç
+- [X] **T024-5:** Contract testleri çalıştır ve geç
   ```bash
   pnpm test:contract -- courier-location
   ```
@@ -88,7 +88,7 @@ Yeni bir developer için:
   - ✓ State machine validation
   - ✓ Role-based permissions
   
-- [ ] **T020-5:** Contract testleri çalıştır
+- [X] **T020-5:** Contract testleri çalıştır
   ```bash
   pnpm test:contract -- vendor-api
   ```

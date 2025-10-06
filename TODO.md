@@ -62,24 +62,35 @@ Yeni bir developer için:
   pnpm test:contract -- courier-location
   ```
 
-### Track 2: Vendor Dashboard 🏪 (PARALLEL)
-- [ ] **T020-1:** `app/vendor/(dashboard)/page.tsx` oluştur
+### Track 2: Vendor Dashboard 🏪 (PARALLEL) ✅
+- [X] **T020-1:** `app/vendor/(dashboard)/page.tsx` güncellendi ✅
   - 📖 Contract: `specs/001-kapsam-roller-m/contracts/vendor-api.md`
   - 🧪 Test: `tests/contract/vendor-api.contract.test.ts`
-  - ⏱️ Süre: 3 gün
+  - ⏱️ Tamamlandı: 2025-10-06
   
-- [ ] **T020-2:** Dashboard stats API'sini çağır
+- [X] **T020-2:** Dashboard stats API'si oluşturuldu ✅
   - 📖 Contract: Section "GET /api/vendor/dashboard/stats"
+  - 📁 Dosya: `src/app/api/vendor/dashboard/stats/route.ts`
+  - ✓ Period filtreleme: today, week, month
+  - ✓ Revenue, order counts, status breakdown
+  - ✓ Top products calculation
   
-- [ ] **T020-3:** Real-time order updates ekle (Supabase Realtime)
+- [X] **T020-3:** Real-time order updates eklendi ✅
   - 📖 Realtime: `specs/001-kapsam-roller-m/contracts/realtime-channels.md`
+  - 📁 Component: `src/components/vendor/DashboardClient.tsx`
+  - ✓ Supabase Realtime subscription
+  - ✓ New order notifications with sound
+  - ✓ Order status update subscriptions
   
-- [ ] **T020-4:** Order status transition UI ekle
-  - 📖 Contract: `specs/001-kapsam-roller-m/contracts/orders-api.md` (Section "State Transitions")
+- [X] **T020-4:** Order status transition UI mevcut ✅
+  - 📖 Contract: `specs/001-kapsam-roller-m/contracts/orders-api.md`
+  - 📁 API: `src/app/api/orders/[id]/transition/route.ts`
+  - ✓ State machine validation
+  - ✓ Role-based permissions
   
 - [ ] **T020-5:** Contract testleri çalıştır
   ```bash
-  npm run test:contract -- vendor-api
+  pnpm test:contract -- vendor-api
   ```
 
 ### Track 3: Menu Management 📝 (PARALLEL)

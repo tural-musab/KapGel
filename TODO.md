@@ -47,6 +47,7 @@ Yeni bir developer için:
 - [X] **T024-2:** `insert_courier_location()` RPC function implement et ✅
   - 📖 Contract: Section "RPC Functions"
   - 🗄️ Migration: `20251006000100_courier_location_rpc.sql`
+  - 🔧 Schema Fix: `20251007000100_fix_courier_locations_schema.sql` ✅
   
 - [X] **T024-3:** Coordinate validation ekle (lat/lng range checks) ✅
   - 📖 Contract: Section "Validation Rules"
@@ -57,10 +58,13 @@ Yeni bir developer için:
   - 📖 RLS: `db/rls-complete.sql` (courier_locations policies)
   - ✓ shift_status = 'online' validation
   
-- [X] **T024-5:** Contract testleri çalıştır ve geç
+- [X] **T024-5:** Contract testleri çalıştır ve geç ✅
   ```bash
   pnpm test:contract -- courier-location
   ```
+  - [X] **T024-6:** Rate limiting implement et (100 req/min) ✅
+  - 📁 File: `lib/rate-limit.ts`
+  - ✓ Memory-based rate limiting with configurable limits
 
 ### Track 2: Vendor Dashboard 🏪 (PARALLEL) ✅
 - [X] **T020-1:** `app/vendor/(dashboard)/page.tsx` güncellendi ✅
@@ -127,6 +131,29 @@ Yeni bir developer için:
   - ✓ Zod schemas in all APIs
   - ✓ Detailed error responses
   - ✓ Field-level validation messages
+
+### Track 4: Vendor Order Management 🎯 (NEW - CRITICAL MISSING)
+- [X] **T025-1:** Assign courier endpoint eklendi ✅
+  - 📖 Contract: `specs/001-kapsam-roller-m/contracts/vendor-api.md`
+  - 📁 File: `src/app/api/vendor/orders/[id]/assign-courier/route.ts`
+  - ✓ POST assign, DELETE unassign
+  - ✓ Full validation chain
+  - ✓ Rate limiting integrated
+  - ⏱️ Tamamlandı: 2025-10-07
+  
+- [X] **T025-2:** Available couriers endpoint eklendi ✅
+  - 📖 Contract: Section "GET /api/vendor/couriers/available"
+  - 📁 File: `src/app/api/vendor/couriers/available/route.ts`
+  - ✓ Filter by vehicle type, branch proximity
+  - ✓ Exclude busy couriers
+  - ✓ Real-time availability check
+  - ⏱️ Tamamlandı: 2025-10-07
+  
+- [X] **T025-3:** Contract tests için courier assignment ✅
+  - 📁 File: `tests/contract/vendor-courier-assignment.contract.test.ts`
+  - ✓ 15+ test cases covering all scenarios
+  - ✓ Error handling validation
+  - ✓ Performance tests included
 
 ---
 
@@ -262,17 +289,34 @@ Her task için:
 ## 📊 Progress Tracking
 
 ```
-Week 5 Progress: [▱▱▱▱▱▱▱▱▱▱] 0/15 tasks
-  Track 1 (T024): [▱▱▱▱▱] 0/5 tasks
-  Track 2 (T020): [▱▱▱▱▱] 0/5 tasks
-  Track 3 (T021): [▱▱▱▱▱] 0/5 tasks
+Week 5 Progress: [███████████] 18/18 tasks ✅ COMPLETED
+  Track 1 (T024): [█████] 6/6 tasks ✅ (+ schema fix)
+  Track 2 (T020): [█████] 5/5 tasks ✅
+  Track 3 (T021): [█████] 5/5 tasks ✅
+  Track 4 (T025): [███] 3/3 tasks ✅ (NEW - kritik eksikler giderildi)
 
 Week 6 Progress: [▱▱▱▱▱▱▱▱▱▱] 0/7 tasks
 Week 7-9 Progress: [▱▱▱▱▱▱▱▱▱▱] 0/8 tasks
 Week 10 Progress: [▱▱▱▱▱▱▱▱▱▱] 0/6 tasks
 
-Overall: 0/36 tasks (0%)
+Overall: 18/39 tasks (46% - Gerçekçi değerlendirme)
 ```
+
+## 🔧 Week 5 Completion Summary (2025-10-07)
+
+**✅ MAJOR ISSUES RESOLVED:**
+- 🗄️ **Schema Mismatch FIXED:** `courier_locations` table now has all required fields
+- 🚨 **Missing APIs ADDED:** Assign courier and available couriers endpoints
+- ⚡ **Rate Limiting IMPLEMENTED:** All APIs now have proper rate limiting
+- 🧪 **Additional Tests ADDED:** Comprehensive vendor API contract tests
+- 📋 **Documentation UPDATED:** TODO.md now reflects reality
+
+**🎯 KEY ACHIEVEMENTS:**
+- Database schema now matches RPC function expectations
+- All contract-defined vendor endpoints are implemented
+- Rate limiting matches contract specifications (100 req/min for location, 200 req/min for vendor)
+- Error handling follows contract patterns
+- Logging and monitoring integrated throughout
 
 ---
 

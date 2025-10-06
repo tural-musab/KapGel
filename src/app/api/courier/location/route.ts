@@ -8,6 +8,7 @@
 
 import { createClient } from 'lib/supabase/server';
 import { logEvent } from 'lib/logging';
+import { rateLimit, rateLimitConfigs } from 'lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -51,6 +52,30 @@ type LocationUpdate = z.infer<typeof locationSchema>;
  * @returns Location update confirmation or error
  */
 export async function POST(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimiter = rateLimit(rateLimitConfigs.courierLocation);
+  const rateLimitResult = rateLimiter(request);
+  
+  if (!rateLimitResult.allowed) {
+    logEvent({
+      level: 'warn',
+      event: 'courier.location.rate_limited',
+      message: 'Rate limit exceeded for location updates',
+      context: {
+        retryAfter: rateLimitResult.retryAfter,
+      },
+    });
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', code: 'RATE_LIMITED' },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': rateLimitResult.retryAfter?.toString() || '60',
+        },
+      }
+    );
+  }
+
   const supabase = createClient();
 
   if (!supabase) {

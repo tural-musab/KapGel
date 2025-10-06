@@ -1,6 +1,6 @@
--- Migration: Complete RLS Policies (FIXED)
+-- Migration: Complete RLS Policies
 -- Created: 2025-10-05
--- Description: Comprehensive RLS policies with state machine guards via TRIGGER
+-- Description: Comprehensive RLS policies with state machine guards, 
 --              INSERT/UPDATE policies, and admin bypass
 
 -- Drop existing policies to recreate
@@ -51,83 +51,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================================================
--- STATE MACHINE TRIGGER (FIXED APPROACH)
--- =============================================================================
-
-CREATE OR REPLACE FUNCTION validate_order_status_transition()
-RETURNS TRIGGER AS $$
-DECLARE
-  user_role TEXT;
-BEGIN
-  -- Skip validation for admins
-  IF is_admin() THEN
-    RETURN NEW;
-  END IF;
-
-  -- Get user role
-  user_role := get_my_role();
-
-  -- Vendor admin transitions
-  IF EXISTS (
-    SELECT 1 FROM branches b
-    JOIN vendors v ON v.id = b.vendor_id
-    WHERE b.id = NEW.branch_id AND v.owner_user_id = auth.uid()
-  ) THEN
-    IF NOT (
-      (OLD.status = 'NEW' AND NEW.status IN ('CONFIRMED', 'REJECTED')) OR
-      (OLD.status = 'CONFIRMED' AND NEW.status IN ('PREPARING', 'CANCELED_BY_VENDOR')) OR
-      (OLD.status = 'PREPARING' AND NEW.status IN ('READY', 'CANCELED_BY_VENDOR')) OR
-      (OLD.status = NEW.status) -- Allow no-op updates
-    ) THEN
-      RAISE EXCEPTION 'Invalid vendor status transition from % to %', OLD.status, NEW.status;
-    END IF;
-    RETURN NEW;
-  END IF;
-
-  -- Courier transitions
-  IF NEW.courier_id = get_my_courier_id() THEN
-    IF NOT (
-      (OLD.status = 'READY' AND NEW.status = 'PICKED_UP') OR
-      (OLD.status = 'PICKED_UP' AND NEW.status = 'ON_ROUTE') OR
-      (OLD.status = 'ON_ROUTE' AND NEW.status = 'DELIVERED') OR
-      (OLD.status = NEW.status) -- Allow no-op updates
-    ) THEN
-      RAISE EXCEPTION 'Invalid courier status transition from % to %', OLD.status, NEW.status;
-    END IF;
-    RETURN NEW;
-  END IF;
-
-  -- Customer cancellation (within 2 minutes)
-  IF NEW.customer_id = auth.uid() AND user_role = 'customer' THEN
-    IF OLD.status = 'NEW' AND NEW.status = 'CANCELED_BY_USER' THEN
-      IF EXTRACT(EPOCH FROM (now() - OLD.created_at)) > 120 THEN
-        RAISE EXCEPTION 'Order can only be cancelled within 2 minutes of creation';
-      END IF;
-      RETURN NEW;
-    END IF;
-  END IF;
-
-  -- If we get here, the update is not allowed
-  IF OLD.status != NEW.status THEN
-    RAISE EXCEPTION 'Unauthorized status change from % to %', OLD.status, NEW.status;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Drop existing trigger if exists
-DROP TRIGGER IF EXISTS validate_order_status_before_update ON orders;
-
--- Create trigger
-CREATE TRIGGER validate_order_status_before_update
-  BEFORE UPDATE ON orders
-  FOR EACH ROW
-  WHEN (OLD.status IS DISTINCT FROM NEW.status)
-  EXECUTE FUNCTION validate_order_status_transition();
-
--- =============================================================================
--- ORDERS TABLE POLICIES (SIMPLIFIED - No OLD references in WITH CHECK)
+-- ORDERS TABLE POLICIES (Most Critical)
 -- =============================================================================
 
 -- SELECT policies
@@ -163,7 +87,7 @@ CREATE POLICY "Customers can create orders"
     AND get_my_role() = 'customer'
   );
 
--- UPDATE policies (FIXED - State machine now in TRIGGER)
+-- UPDATE policies with state machine guards
 CREATE POLICY "Vendor admins can update their branch orders" 
   ON orders FOR UPDATE 
   USING (
@@ -183,17 +107,36 @@ CREATE POLICY "Vendor admins can update their branch orders"
       WHERE b.id = orders.branch_id
         AND v.owner_user_id = auth.uid()
     )
+    -- State machine guards for vendors
+    AND (
+      (OLD.status = 'NEW' AND status IN ('CONFIRMED', 'REJECTED')) OR
+      (OLD.status = 'CONFIRMED' AND status IN ('PREPARING', 'CANCELED_BY_VENDOR')) OR
+      (OLD.status = 'PREPARING' AND status IN ('READY', 'CANCELED_BY_VENDOR'))
+    )
   );
 
 CREATE POLICY "Couriers can update their assigned orders"
   ON orders FOR UPDATE
   USING (courier_id = get_my_courier_id())
-  WITH CHECK (courier_id = get_my_courier_id());
+  WITH CHECK (
+    courier_id = get_my_courier_id()
+    -- Courier state transitions
+    AND (
+      (OLD.status = 'READY' AND status = 'PICKED_UP') OR
+      (OLD.status = 'PICKED_UP' AND status = 'ON_ROUTE') OR
+      (OLD.status = 'ON_ROUTE' AND status = 'DELIVERED')
+    )
+  );
 
 CREATE POLICY "Customers can cancel early orders"
   ON orders FOR UPDATE
   USING (customer_id = auth.uid())
-  WITH CHECK (customer_id = auth.uid());
+  WITH CHECK (
+    customer_id = auth.uid()
+    AND OLD.status = 'NEW'
+    AND status = 'CANCELED_BY_USER'
+    AND (EXTRACT(EPOCH FROM (now() - created_at)) < 120) -- Within 2 minutes
+  );
 
 CREATE POLICY "Admins can update any order"
   ON orders FOR UPDATE
@@ -321,7 +264,7 @@ CREATE POLICY "Order items inserted with orders"
 CREATE POLICY "Public can view available products" 
   ON products FOR SELECT 
   USING (
-    (is_active = true)
+    (is_available = true AND deleted_at IS NULL)
     OR vendor_id = get_my_vendor_id()
     OR is_admin()
   );
@@ -349,6 +292,6 @@ BEGIN
   RAISE NOTICE 'Total RLS policies created: %', policy_count;
   
   IF policy_count < 30 THEN
-    RAISE WARNING 'Expected at least 30 policies, got %', policy_count;
+    RAISE EXCEPTION 'Expected at least 30 policies, got %', policy_count;
   END IF;
 END $$;

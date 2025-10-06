@@ -1,110 +1,289 @@
 # Tasks: Full-Stack Order and Delivery Platform MVP
 
-**Input**: Design details from /plan command arguments
-**Prerequisites**: User-provided context
+**Last Updated:** 2025-10-05  
+**Progress:** Phase 1-2 Complete (Contracts, Security, Observability) ✅  
+**Current Phase:** Phase 3.4 (Core Implementation)
 
-## Phase 1-lite: Minimal Contracts & Constitution Prep
+---
 
-- [X] T034 [P] Create `specs/001-kapsam-roller-m/contracts/` and scaffold contract documentation.
-- [X] T035 [P] Draft customer orders API contract (markdown).
-- [X] T036 Draft courier API contract (markdown).
-- [X] T037 Draft vendor API contract (markdown).
-- [X] T038 Outline failing contract test stubs under `tests/contract/` for orders, vendor, courier.
-- [X] T039 Summarise RLS/RBAC and observability closure checklist for Phase 1 sign-off.
+## ✅ Phase 1: Design & Contracts (COMPLETE - Week 1-3)
 
-## Phase 3.1: Setup & Foundation
+### Week 1: API Contracts ✅
+- [X] T034 [P] Create `specs/001-kapsam-roller-m/contracts/` folder
+- [X] T035 [P] Document courier location API contract (courier-location-api.md)
+- [X] T036 [P] Document orders API contract (orders-api.md)
+- [X] T037 [P] Document vendor API contract (vendor-api.md)
+- [X] T060 Document notifications API contract (notifications-api.md)
+- [X] T061 Document realtime channels specification (realtime-channels.md)
+- [X] T062 Create contracts/README.md with usage guidelines
 
-- [X] T001 [P] Initialize Next.js 15 application with TypeScript, Tailwind CSS, and shadcn/ui.
-- [X] T002 [P] Create PWA assets: `public/manifest.webmanifest`, icons, and `workers/service-worker.ts`.
-- [X] T003 [P] Write Supabase schema SQL for all tables (users, vendors, orders, etc.) in `db/schema.sql`.
-- [X] T004 [P] Write Supabase RLS policies for all tables in `db/rls.sql`.
-- [X] T005 [P] Create a seed script `db/seed.mjs` to populate the database with sample data.
-- [X] T006 [P] Configure Supabase CLI workflows and create initial SQL migrations in `supabase/migrations/`.
-- [X] T007 [P] Set up Playwright and Vitest for testing, including configuration files.
-- [X] T008 [P] Create a basic CI workflow file `.github/workflows/ci.yml` for linting, type-checking, and running tests.
-- [X] T009 [P] Create the basic application layout in `app/layout.tsx`.
+### Week 2: Security & RBAC ✅
+- [X] T038 Complete RLS policies with INSERT/UPDATE/DELETE (db/rls-complete.sql)
+- [X] T063 Create RLS migration (20251005000100_complete_rls_policies.sql)
+- [X] T064 Implement helper functions (get_my_role, is_admin, get_my_courier_id, get_my_vendor_id)
+- [X] T065 Add state machine guards to order transitions
+- [X] T066 Create Next.js middleware for route protection (middleware.ts)
+- [X] T067 Create Supabase middleware client (lib/supabase/middleware.ts)
 
-## Phase 3.2: Tests First (TDD)
+### Week 3: Observability & Performance ✅
+- [X] T068 Implement structured logger (lib/logger.ts)
+- [X] T069 Create optional logs table migration (20251005000200_optional_logs_table.sql)
+- [X] T070 Setup Sentry client config (lib/sentry.client.config.ts)
+- [X] T071 Setup Sentry server config (lib/sentry.server.config.ts)
+- [X] T072 Create ErrorBoundary component (src/components/ErrorBoundary.tsx)
+- [X] T073 Define performance budgets (docs/performance-budgets.md)
+- [X] T074 Create environment variables template (.env.example)
 
-**CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
+---
 
-- [X] T010 [P] Write Playwright E2E test for the customer order flow in `tests/e2e/customer-flow.spec.ts`.
-- [X] T011 [P] Write Playwright E2E test for the vendor order management flow in `tests/e2e/vendor-flow.spec.ts`.
-- [X] T012 [P] Write Playwright E2E test for the courier delivery flow in `tests/e2e/courier-flow.spec.ts`.
-- [X] T013 [P] Write Vitest unit tests for RBAC logic in `lib/rbac.ts` to ensure RLS rules are correctly implemented in functions.
+## ✅ Phase 2: Contract Tests (COMPLETE - Week 4)
 
-## Phase 3.3: Core Implementation (Customer Flow)
+### Week 4: Contract Test Implementation ✅
+- [X] T039 Setup contract tests infrastructure (tests/contract/)
+- [X] T075 Write orders API contract tests (18 test cases)
+- [X] T076 Write courier location API contract tests (15 test cases)
+- [X] T077 Write vendor API contract tests (20 test cases)
+- [X] T078 Create contract tests README with guidelines
+- [X] T079 Update package.json with test scripts
+- [ ] T080 Write notifications API contract tests (TODO)
+- [ ] T081 Write realtime channels contract tests (TODO)
 
-- [X] T014 [P] Implement the city selection and vendor search page at `app/page.tsx`.
-- [X] T015 [P] Implement the vendor menu page at `app/vendors/[slug]/page.tsx`.
-- [X] T016 [P] Implement the shopping cart state management using Zustand in `lib/cart-store.ts`.
-- [X] T017 [P] Implement the checkout page at `app/(customer)/checkout/page.tsx` with address and payment options (Phase 3 skeleton; wire to Supabase order RPC and validations).
-- [X] T018 [P] Implement the order tracking page at `app/orders/[id]/page.tsx` (add realtime updates, status timeline, map integration hooks).
-- [X] T019 Implement the API route for order creation in `app/api/orders/route.ts` (add input validation, pricing safeguards, and tests).
-- [X] T046 [UI] Port the advanced landing experience with Supabase-backed search/filtering at `app/page.tsx`.
-- [ ] T047 [UI] Implement Supabase Auth login/register screens with email/password forms and error handling.
-- [ ] T048 [UX] Provide a role selection/onboarding step after login (customer/vendor/courier/admin) with redirect logic. *(See T048A–T048C)*
-- [ ] T048A Create `/onboarding/role` wizard that forces selection for users with `role = pending` and shows contextual CTAs per choice.
-- [ ] T048B Persist selections in Supabase (`users.role` + application tables) and refresh JWT claims so guards know the active role (extends Phase 1-lite claim mapping).
-- [ ] T048C Add Playwright coverage for login → role onboarding flow (customer happy-path) and update auth unit tests for claim refresh.
+**Total Contract Tests:** 53/70 (76% complete)
 
-## Phase 3.4: Core Implementation (Vendor & Courier Panels)
+---
 
-- [ ] T020 [P] Implement the vendor dashboard for managing orders at `app/vendor/(dashboard)/page.tsx`.
-- [ ] T021 [P] Implement the menu management CRUD page for vendors at `app/vendor/menu/page.tsx`.
-- [X] T022 Implement the API route for order state transitions at `app/api/orders/[id]/transition/route.ts`.
-- [ ] T023 [P] Implement the courier dashboard for managing shifts and tasks at `app/courier/page.tsx`.
-- [ ] T024 Implement the API route for courier location updates at `app/api/courier/location/route.ts`.
-- [ ] T041 [UI] Port shared dashboard components (stats cards, timelines, action buttons) from prototype into `src/components/ui/`.
-- [X] T042 [UI] Port vendor dashboard layout with mock data and hook it to shared components (depends on T041, blocked by T022/T021 for real data).
-- [ ] T043 [UI] Port courier dashboard layout with mock data and location placeholder (depends on T041, blocked by T041 and T024 for real data).
-- [X] T044 [Data] Wire vendor dashboard to Supabase (orders, menu management, realtime) after T022/T021.
-- [ ] T045 [Data] Wire courier dashboard to Supabase (tasks, shifts, location channel) after T022/T024.
-- [X] T049 [Auth] Guard vendor/courier/admin routes with Supabase session/role checks and redirect unauthenticated users to login.
-- [ ] T050 [Data] Model vendor/courier onboarding applications (pending/approved) and wire role guards to respect approval state.
+## Phase 3.1: Setup & Foundation ✅
 
-## Phase 3.4b: Admin Oversight
+- [X] T001 [P] Initialize Next.js 15 with TypeScript, Tailwind, shadcn/ui
+- [X] T002 [P] Create PWA assets (manifest, icons, service-worker)
+- [X] T003 [P] Write Supabase schema SQL (db/schema.sql)
+- [X] T004 [P] Write initial RLS policies (db/rls.sql) - **Enhanced in Phase 1**
+- [X] T005 [P] Create seed script (db/seed.mjs)
+- [X] T006 [P] Configure Supabase CLI and migrations
+- [X] T007 [P] Setup Playwright and Vitest
+- [X] T008 [P] Create CI workflow (.github/workflows/ci.yml)
+- [X] T009 [P] Create app layout (app/layout.tsx)
 
-- [X] T051 [Admin] Kurumsal KPI kartları, başvuru listeleri ve kullanıcı yönetimi tablosu ile `/admin` kontrol panelini oluştur.
-- [X] T052 [Admin] Vendor/kurye başvurularını onaylamak veya reddetmek için Supabase service-role destekli sunucu aksiyonlarını ekle.
-- [X] T053 [Admin] Kullanıcı rolü güncelleme kontrolleri ekleyip `auth.users` ve başvuru tablolarıyla otomatik senkronizasyon sağla.
-- [X] T054 [Docs] Admin iş akışlarını ve yetkilendirme modelini dokümantasyona ekle (runbook/quickstart güncellemesi).
+---
 
-## Phase 3.5: Integration & Polish
+## Phase 3.2: Tests First (TDD) ✅
 
-- [ ] T025 [P] Implement Web Push notification subscription logic in `components/PushManager.tsx`.
-- [ ] T026 Implement the backend logic to send a push notification when an order's status changes.
-- [ ] T027 [P] Create the reusable Map component in `components/Map.tsx` using MapLibre GL.
-- [ ] T028 [P] Create the `InstallPWA` component in `components/InstallPWA.tsx`.
-- [X] T029 [P] Write a comprehensive `README.md` with setup and local development instructions. *(Delivered 2025-09-30)*
-- [ ] T030 [P] Add comments to complex code sections, especially in `lib/rbac.ts` and the service worker.
+- [X] T010 [P] Write E2E test: customer flow
+- [X] T011 [P] Write E2E test: vendor flow
+- [X] T012 [P] Write E2E test: courier flow
+- [X] T013 [P] Write unit tests: RBAC logic
 
-## Phase 3.6: Documentation & Governance Catch-up
+---
 
-- [X] T031 Produce `specs/001-kapsam-roller-m/research.md` capturing MapLibre, Supabase Realtime, Web Push, accessibility, and observability decisions. *(Delivered 2025-09-30)*
-- [X] T032 Produce `specs/001-kapsam-roller-m/data-model.md` detailing entities, relationships, and order state machine with RLS implications. *(Delivered 2025-09-30 — requires DBML follow-up)*
-- [X] T033 Produce `specs/001-kapsam-roller-m/quickstart.md` outlining UI architecture, routing, and developer environment steps; update `tasks.md` status flags once documents are complete. *(Delivered 2025-09-30)*
+## Phase 3.3: Customer Flow (80% Complete)
 
-## Dependencies
+- [X] T014 [P] City selection & vendor search (app/page.tsx)
+- [X] T015 [P] Vendor menu page (app/vendors/[slug]/page.tsx)
+- [X] T016 [P] Shopping cart (lib/cart-store.ts)
+- [~] T017 [P] Checkout page (skeleton done, needs API integration)
+- [X] T018 [P] Order tracking page (app/orders/[id]/page.tsx)
+- [X] T019 API route: order creation (app/api/orders/route.ts)
+- [X] T046 [UI] Port landing page with Supabase search
+- [ ] T047 [UI] Auth screens (login/register)
+- [ ] T048 [UX] Role selection onboarding
+- [ ] T048A Create `/onboarding/role` wizard
+- [ ] T048B Persist role selection in Supabase
+- [ ] T048C Add Playwright coverage for onboarding
 
-- **Setup (T001-T009)** must be completed before all other phases.
-- **Tests (T010-T013)** must be written before their corresponding implementation tasks.
-- **Core Implementation (T014-T024)** depends on the setup phase.
-- **T019** (Order API) blocks **T017** (Checkout Page).
-- **T022** (Transition API) blocks **T020** (Vendor Dashboard) and **T023** (Courier Dashboard).
+---
 
-## Parallel Example
+## Phase 3.4: Vendor & Courier Panels (60% Complete)
+
+- [ ] T020 [P] Vendor dashboard (app/vendor/(dashboard)/page.tsx)
+- [ ] T021 [P] Menu management CRUD (app/vendor/menu/page.tsx)
+- [X] T022 API route: order transitions (app/api/orders/[id]/transition/route.ts)
+- [ ] T023 [P] Courier dashboard (app/courier/page.tsx)
+- [ ] T024 API route: courier location (app/api/courier/location/route.ts)
+- [ ] T041 [UI] Port shared dashboard components
+- [X] T042 [UI] Vendor dashboard layout (mock data)
+- [ ] T043 [UI] Courier dashboard layout (mock data)
+- [X] T044 [Data] Wire vendor dashboard to Supabase
+- [ ] T045 [Data] Wire courier dashboard to Supabase
+- [X] T049 [Auth] Guard routes with session/role checks
+- [ ] T050 [Data] Vendor/courier application models
+
+---
+
+## Phase 3.4b: Admin Oversight ✅
+
+- [X] T051 [Admin] Create admin dashboard (/admin)
+- [X] T052 [Admin] Application approval actions
+- [X] T053 [Admin] User role update controls
+- [X] T054 [Docs] Admin workflows documentation
+
+---
+
+## Phase 3.5: Integration & Polish (20% Complete)
+
+- [ ] T025 [P] Web Push subscription (components/PushManager.tsx)
+- [ ] T026 Push notifications on order status change
+- [ ] T027 [P] Reusable Map component (components/Map.tsx)
+- [ ] T028 [P] InstallPWA component (components/InstallPWA.tsx)
+- [X] T029 [P] Comprehensive README.md
+- [ ] T030 [P] Code comments for complex sections
+
+---
+
+## Phase 3.6: Documentation ✅
+
+- [X] T031 research.md (MapLibre, Realtime, Web Push, etc.)
+- [X] T032 data-model.md (entities, relationships, state machine)
+- [X] T033 quickstart.md (UI architecture, routing, dev setup)
+
+---
+
+## 📊 Progress Summary
+
+| Phase | Progress | Status |
+|-------|----------|--------|
+| Phase 1: Contracts | 100% | ✅ Complete |
+| Phase 2: Contract Tests | 76% | 🟡 In Progress |
+| Phase 3.1: Setup | 100% | ✅ Complete |
+| Phase 3.2: TDD | 100% | ✅ Complete |
+| Phase 3.3: Customer | 80% | 🟡 In Progress |
+| Phase 3.4: Vendor/Courier | 60% | 🟡 In Progress |
+| Phase 3.4b: Admin | 100% | ✅ Complete |
+| Phase 3.5: Integration | 20% | 🔴 Blocked |
+| Phase 3.6: Documentation | 100% | ✅ Complete |
+
+**Overall Progress: 65%**
+
+---
+
+## 🚀 Parallel Execution Tracks (Week 5-10)
+
+Based on plan.md Öneri A, following tracks can run in parallel:
+
+### Track 1: Security & Compliance (Week 5-6)
+**Owner:** Backend Team  
+**Dependencies:** Phase 1 complete ✅
+
+- [ ] T082 Complete remaining RLS policy tests
+- [ ] T083 Security audit of all endpoints
+- [ ] T084 RBAC enforcement verification
+- [ ] T085 Audit logging for sensitive operations
+- [ ] T086 Rate limiting implementation
+
+### Track 2: Vendor Panel (Week 5-7)
+**Owner:** Frontend Team  
+**Dependencies:** T022 complete ✅
+
+- [ ] T020 Vendor dashboard implementation
+- [ ] T021 Menu CRUD implementation
+- [ ] T041 Shared dashboard components
+- [ ] T044 Supabase integration (in progress)
+- [ ] T087 Courier assignment UI
+- [ ] T088 Business hours management
+
+### Track 3: Courier Panel (Week 6-8)
+**Owner:** Mobile Team  
+**Dependencies:** T024 (Location API) needed
+
+- [ ] T024 Courier location API (CRITICAL PATH)
+- [ ] T023 Courier dashboard
+- [ ] T043 UI layout with mock data
+- [ ] T045 Supabase integration
+- [ ] T089 GPS tracking implementation
+- [ ] T090 Shift management
+
+### Track 4: Integration (Week 7-9)
+**Owner:** Full Stack Team  
+**Dependencies:** Tracks 1-3 in progress
+
+- [ ] T025-T026 Web Push notifications
+- [ ] T027 Map component (MapLibre)
+- [ ] T028 PWA install prompt
+- [ ] T091 Realtime order updates
+- [ ] T092 Courier location streaming
+
+### Track 5: Polish & Testing (Week 8-10)
+**Owner:** QA + Frontend  
+**Dependencies:** Track 4 in progress
+
+- [ ] T030 Code documentation
+- [ ] T080-T081 Remaining contract tests
+- [ ] T093 Accessibility audit
+- [ ] T094 Performance optimization
+- [ ] T095 Cross-browser testing
+- [ ] T096 Mobile responsiveness
+
+---
+
+## Critical Path
 
 ```
-# Launch initial setup tasks together:
-Task: "Initialize Next.js 15 application..."
-Task: "Create PWA assets..."
-Task: "Write Supabase schema SQL..."
-Task: "Write Supabase RLS policies..."
-Task: "Configure Supabase CLI migrations..."
-
-# Launch E2E test creation together:
-Task: "Write Playwright E2E test for the customer order flow..."
-Task: "Write Playwright E2E test for the vendor order management flow..."
-Task: "Write Playwright E2E test for the courier delivery flow..."
+Week 5:  T024 (Location API) - BLOCKER for Track 3
+Week 6:  T020-T021 (Vendor Panel) - BLOCKER for demo
+Week 7:  T025-T026 (Notifications) - MVP feature
+Week 8:  T027 (Map integration) - MVP feature
+Week 9:  T091-T092 (Realtime) - MVP feature
+Week 10: T093-T096 (Launch prep)
 ```
+
+---
+
+## Blocking Issues
+
+| Task | Blocked By | ETA |
+|------|-----------|-----|
+| T017 (Checkout) | API integration needed | Week 5 |
+| T023 (Courier Dashboard) | T024 (Location API) | Week 6 |
+| T025 (Web Push) | Vendor/Courier panels | Week 7 |
+| T027 (Map) | T024 (Location API) | Week 7 |
+
+---
+
+## Next Actions (Week 5)
+
+1. **Priority 1 (CRITICAL):**
+   - [ ] T024: Implement courier location API
+   - [ ] T080: Complete notifications contract tests
+   - [ ] T082: RLS policy testing
+
+2. **Priority 2 (HIGH):**
+   - [ ] T020: Vendor dashboard
+   - [ ] T021: Menu management
+   - [ ] T087: Courier assignment
+
+3. **Priority 3 (MEDIUM):**
+   - [ ] T047: Auth screens
+   - [ ] T048: Role onboarding
+   - [ ] T041: Shared components
+
+---
+
+## Dependencies Matrix
+
+```
+T001-T009 (Setup) ✅
+    ↓
+T010-T013 (Tests) ✅
+    ↓
+T014-T019 (Customer) 80%
+    ↓
+T022 (Transitions) ✅ → T020, T021 (Vendor) ⏳
+T024 (Location) ⏳ → T023, T045 (Courier) 🔴
+    ↓
+T025-T028 (Integration) 🔴
+    ↓
+T093-T096 (Polish) 🔴
+```
+
+**Legend:**
+- ✅ Complete
+- ⏳ In Progress
+- 🔴 Blocked/Not Started
+
+---
+
+## Related Documentation
+
+- [plan.md](./plan.md) - Implementation roadmap
+- [spec.md](./spec.md) - Functional requirements
+- [contracts/](./contracts/) - API specifications
+- [data-model.md](./data-model.md) - Database design

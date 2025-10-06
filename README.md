@@ -64,6 +64,59 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
    ```
    Visit [http://localhost:3000](http://localhost:3000) to verify the storefront.
 
+## 🎯 Getting Started for Developers
+
+**New to the project?** Follow this path:
+
+### 1. Read the Foundation Documents (30 minutes)
+- [`README.md`](README.md) ← You are here
+- [`specs/001-kapsam-roller-m/spec.md`](specs/001-kapsam-roller-m/spec.md) - Product requirements
+- [`specs/001-kapsam-roller-m/data-model.md`](specs/001-kapsam-roller-m/data-model.md) - Database schema
+
+### 2. Understand the Development Workflow (15 minutes)
+- **[`TODO.md`](TODO.md)** ← **START HERE** - Actionable task list
+- [`docs/DEVELOPMENT-ROADMAP.md`](docs/DEVELOPMENT-ROADMAP.md) - Detailed 6-week plan
+- [`specs/001-kapsam-roller-m/plan.md`](specs/001-kapsam-roller-m/plan.md) - Overall strategy
+
+### 3. Learn the Contract-Driven Approach (30 minutes)
+- [`specs/001-kapsam-roller-m/contracts/`](specs/001-kapsam-roller-m/contracts/) - API specifications
+- [`tests/contract/README.md`](tests/contract/README.md) - Testing guidelines
+
+### 4. Start Your First Task (2-3 hours)
+```bash
+# 1. Open TODO.md
+code TODO.md
+
+# 2. Pick a [ ] unchecked task (start with Week 5)
+# 3. Read the referenced contract (📖 icon)
+# 4. Run the contract test (it should fail)
+npm run test:contract
+
+# 5. Implement the feature
+# 6. Make the test pass
+# 7. Mark task complete [X] in TODO.md
+```
+
+### Quick Reference Card
+
+| Document | Purpose | When to Read |
+|----------|---------|--------------|
+| [`TODO.md`](TODO.md) | **Daily task list** | Every morning ⭐ |
+| [`docs/DEVELOPMENT-ROADMAP.md`](docs/DEVELOPMENT-ROADMAP.md) | Detailed weekly plan | When starting a new week |
+| [`specs/001-kapsam-roller-m/contracts/`](specs/001-kapsam-roller-m/contracts/) | API contracts | Before implementing each feature |
+| [`db/rls-complete.sql`](db/rls-complete.sql) | Security policies | When working with database |
+| [`tests/contract/`](tests/contract/) | Contract tests | Continuously (TDD) |
+
+### Development Philosophy
+
+```
+1. Read Contract     → What should the API do?
+2. Run Test (fails)  → What does success look like?
+3. Implement         → Write code to match contract
+4. Test Passes       → Validation ✅
+5. Mark TODO         → Track progress
+```
+
 ## ✅ Quality Gates
 
 | Command | Purpose |
@@ -71,6 +124,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
 | `pnpm lint` | ESLint checks for TypeScript/React code. |
 | `pnpm typecheck` | TypeScript type safety validation. |
 | `pnpm test:unit` | Vitest unit suite (RBAC, utilities). |
+| `pnpm test:contract` | Contract compliance tests (API specifications). |
 | `pnpm test:e2e` | Playwright scenarios for customer/vendor/courier flows. |
 | `pnpm test:e2e --headed` | Optional headed run for manual accessibility and UX review (Axe automation pending). |
 
@@ -81,36 +135,83 @@ The CI pipeline uses the Supabase CLI to push schema changes; when you add migra
 ## 🗂️ Repository Map
 
 ```
-src/
-├── app/               # App Router routes per role (customer, vendor, courier, admin)
-├── components/        # Planned shared UI components (see src/components/README.md)
-├── lib/               # Client/server utilities (Supabase, RBAC, stores)
-├── db/                # Schema snapshot, seeds, RLS helpers, and read-only TypeScript types
-├── supabase/migrations/ # Supabase CLI migrations (source of truth for schema changes)
-├── workers/           # Service worker entry point
-├── tests/             # Playwright + Vitest suites
-└── specs/001-kapsam-roller-m/
-    ├── spec.md        # Product specification
-    ├── plan.md        # Implementation roadmap
-    ├── research.md    # Technical investigations & risk mitigations
-    ├── data-model.md  # Schema, state machine, access controls
-    ├── quickstart.md  # Developer onboarding & workflows
-    └── tasks.md       # Execution checklist
+📦 kapgel/
+├── 📄 TODO.md                          ← **START HERE** (Daily tasks)
+├── 📄 README.md                        ← You are here
+├── 📁 docs/
+│   ├── DEVELOPMENT-ROADMAP.md          ← Detailed 6-week plan
+│   └── performance-budgets.md          ← Performance targets
+├── 📁 specs/001-kapsam-roller-m/
+│   ├── spec.md                         ← Product specification
+│   ├── plan.md                         ← Implementation roadmap
+│   ├── data-model.md                   ← Database schema & state machine
+│   ├── tasks.md                        ← Task tracking (synced with TODO.md)
+│   ├── quickstart.md                   ← Developer onboarding
+│   ├── research.md                     ← Technical decisions
+│   └── 📁 contracts/                   ← **API Contracts** (Read before coding!)
+│       ├── README.md
+│       ├── courier-location-api.md
+│       ├── orders-api.md
+│       ├── vendor-api.md
+│       ├── notifications-api.md
+│       └── realtime-channels.md
+├── 📁 src/
+│   ├── app/                            ← Next.js App Router pages
+│   ├── components/                     ← Shared UI components
+│   └── lib/                            ← Utilities (Supabase, RBAC, logger)
+├── 📁 db/
+│   ├── schema.sql                      ← Schema snapshot
+│   ├── rls-complete.sql                ← **Security policies**
+│   └── seed.mjs                        ← Test data
+├── 📁 supabase/migrations/             ← Database migrations
+├── 📁 tests/
+│   ├── contract/                       ← **Contract tests** (TDD)
+│   ├── e2e/                            ← Playwright E2E tests
+│   └── unit/                           ← Vitest unit tests
+└── 📁 workers/                         ← Service worker (PWA)
 ```
 
 ## 🧭 Roadmap Highlights
 
-- Phase 1: Finalise API contracts, RBAC middleware, realtime triggers, and observability wiring.
-- Phase 2: Implement vendor & courier dashboards, courier location API, and Web Push subscription flows.
-- Phase 3: Performance hardening, accessibility audits, and launch readiness (CI, runbooks, release checklist).
+**Current Phase: Week 5 (Implementation)**
 
-Track actionable items in [`specs/001-kapsam-roller-m/tasks.md`](specs/001-kapsam-roller-m/tasks.md).
+- ✅ **Phase 1 (Week 1-4):** API contracts, RLS policies, RBAC middleware, observability
+- 🟡 **Phase 2 (Week 5-6):** Vendor & courier dashboards, courier location API
+- 🔴 **Phase 3 (Week 7-10):** Integration (Push, Maps, Realtime), performance, launch prep
+
+Track actionable items in [`TODO.md`](TODO.md) and [`specs/001-kapsam-roller-m/tasks.md`](specs/001-kapsam-roller-m/tasks.md).
+
+**Progress:**
+```
+Week 5:  [▱▱▱▱▱▱▱▱▱▱] 0/15 tasks  ← Current week
+Week 6:  [▱▱▱▱▱▱▱▱▱▱] 0/7 tasks
+Week 7-9: [▱▱▱▱▱▱▱▱▱▱] 0/8 tasks
+Week 10: [▱▱▱▱▱▱▱▱▱▱] 0/6 tasks
+
+Overall: 0/36 tasks (0%) - Ready to start! 🚀
+```
 
 ## 🤝 Contributing
 
 1. Create a feature branch (`git checkout -b feature/xyz`).
-2. Update documentation/specs as scope evolves.
-3. Ensure linting, type checks, and tests pass before opening a PR.
-4. Include links to relevant spec-kit documents in PR descriptions.
+2. Check [`TODO.md`](TODO.md) for current priorities.
+3. Read the relevant API contract in [`specs/001-kapsam-roller-m/contracts/`](specs/001-kapsam-roller-m/contracts/).
+4. Write/run contract tests first (TDD approach).
+5. Implement the feature following the contract.
+6. Ensure linting, type checks, and tests pass.
+7. Update [`TODO.md`](TODO.md) and mark task complete.
+8. Include links to relevant spec-kit documents in PR descriptions.
 
 For additional context, consult the research log and data model documents under `specs/001-kapsam-roller-m/`.
+
+## 📚 Additional Resources
+
+- [Supabase Documentation](https://supabase.com/docs)
+- [Next.js App Router](https://nextjs.org/docs/app)
+- [Contract Testing Guide](https://martinfowler.com/bliki/ContractTest.html)
+- [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/)
+- [Web Push Protocol](https://web.dev/push-notifications-overview/)
+
+---
+
+**🎯 Quick Start:** Read [`TODO.md`](TODO.md) → Pick a task → Read contract → Test → Implement → Ship!

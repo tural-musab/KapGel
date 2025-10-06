@@ -183,6 +183,14 @@ Yeni bir developer için:
   - 📖 Contract: `specs/001-kapsam-roller-m/contracts/realtime-channels.md`
   - 📝 Dosya: `tests/contract/realtime-channels.contract.test.ts`
   - 🎯 Hedef: 7 test
+  - ⚠️ **CRITICAL:** Realtime subscription testing, message delivery validation
+  
+- [ ] **T082:** Realtime integration tests implement et
+  - 📖 Strategy: `specs/001-kapsam-roller-m/testing-strategy.md`
+  - 📝 Dosya: `tests/integration/realtime-subscriptions.test.ts`
+  - 🎯 Scenarios: Order updates, courier location streaming, RLS filtering
+  - ✓ Test 50 concurrent couriers scenario
+  - ✓ Validate <2s message delivery latency
 
 ---
 
@@ -209,9 +217,16 @@ Yeni bir developer için:
 ### Realtime Updates ⚡
 - [ ] **T091:** Order status realtime subscription
   - 📖 Realtime: `specs/001-kapsam-roller-m/contracts/realtime-channels.md`
+  - 📖 Strategy: `specs/001-kapsam-roller-m/testing-strategy.md`
+  - ✓ Vendor receives new order notifications (<2s)
+  - ✓ Customer sees status changes in real-time
+  - ✓ RLS prevents cross-customer data access
   
 - [ ] **T092:** Courier location realtime stream
   - 📖 Realtime: Section "Courier Location Channel"
+  - ✓ Customer tracking page updates courier position
+  - ✓ Vendor dashboard shows all active courier locations
+  - ✓ Location updates every 15 seconds with <2s latency
 
 ---
 
@@ -340,3 +355,86 @@ Overall: 18/39 tasks (46% - Gerçekçi değerlendirme)
 **🎯 Odak:** Contract-first, Test-driven, Security-focused
 **🚀 Hedef:** Week 10 sonunda production-ready MVP
 **✅ İlke:** Her task tamamlanınca işaretle, momentum kaybet!
+
+----
+
+## 📅 WEEK 11: Production Hardening 🚀 (AFTER Week 10)
+
+**Objective**: Migrate from development-grade to production-ready infrastructure  
+**Related Docs**: `specs/001-kapsam-roller-m/production-hardening.md`
+
+### Infrastructure 🏗️
+- [ ] **T100:** Redis-based rate limiting migration
+  - 📖 Current: In-memory Map (dev only)
+  - 🎯 Target: Upstash Redis with graceful fallback
+  - 📁 Files: `lib/rate-limit-redis.ts`, `lib/rate-limit.ts` (update)
+  - ✓ Zero downtime migration
+  - ✓ Latency impact ≤10ms per request
+  - ✓ Works across multiple app instances
+  
+- [ ] **T101:** Enhanced monitoring and health checks  
+  - 📁 Files: `src/app/api/health/route.ts`, `lib/metrics.ts`
+  - ✓ Database, Redis, Realtime health checks
+  - ✓ Custom business metrics (orders, courier locations)
+  - ✓ Sentry integration with sensitive data filtering
+  
+- [ ] **T102:** Security hardening implementation
+  - 📁 Files: `middleware.ts` (enhanced), `lib/env.ts`
+  - ✓ Security headers (HSTS, CSP, XSS protection)
+  - ✓ Environment variable validation (Zod schema)
+  - ✓ Error log sanitization
+
+### Database & Performance 📊
+- [ ] **T103:** Database index optimization
+  - 📖 Strategy: `specs/001-kapsam-roller-m/production-hardening.md`
+  - ✓ Add production indexes (orders_status_created, courier_locations_order)
+  - ✓ Partial indexes for active data only
+  - ✓ Query performance monitoring setup
+  
+- [ ] **T108:** Bundle optimization and caching
+  - 📁 Files: `next.config.ts`, `lib/cache.ts`
+  - ✓ Bundle size ≤250KB gzipped (webpack-bundle-analyzer)
+  - ✓ API response caching (Next.js unstable_cache)
+  - ✓ Static asset cache headers (1 year TTL)
+
+### Deployment Pipeline 🔄
+- [ ] **T104:** GitHub Actions production workflow
+  - 📁 File: `.github/workflows/production-deploy.yml`
+  - ✓ Staging → E2E tests → Production deployment
+  - ✓ Health check validation post-deployment
+  - ✓ Automated rollback on failure
+  
+- [ ] **T105:** Database migration automation
+  - 📁 File: `scripts/migrate.ts`
+  - ✓ Zero-downtime migration execution
+  - ✓ Version tracking and rollback capability
+  - ✓ Pre-migration validation
+
+### Testing & Validation 🧪
+- [ ] **T106:** Staging environment validation
+  - ✓ Full production-like environment setup
+  - ✓ Redis, monitoring, security headers testing
+  - ✓ Load testing with realistic data volumes
+  
+- [ ] **T109:** Load testing with production scale
+  - 📖 Strategy: `specs/001-kapsam-roller-m/testing-strategy.md`
+  - ✓ 50 concurrent couriers × 4 updates/min = 200 location updates/min
+  - ✓ 100 concurrent vendors, 500 concurrent customers
+  - ✓ p95 latency ≤400ms, realtime latency ≤2s
+  - ✓ Rate limiting effectiveness validation
+
+### Security & Reliability 🔐
+- [ ] **T107:** Production deployment dry run
+  - ✓ Complete deployment simulation on staging
+  - ✓ Rollback procedure testing
+  - ✓ Configuration validation
+  
+- [ ] **T110:** Disaster recovery testing
+  - ✓ Database backup/restore procedure
+  - ✓ Application recovery from outage
+  - ✓ RTO ≤4 hours, RPO ≤15 minutes validation
+  
+- [ ] **T111:** Final security audit
+  - ✓ Security headers validation (securityheaders.com score ≥A)
+  - ✓ Penetration testing (rate limiting, input validation)
+  - ✓ Data privacy compliance check

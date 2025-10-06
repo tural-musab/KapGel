@@ -32,7 +32,7 @@ type AssignCourierInput = z.infer<typeof assignCourierSchema>;
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Apply rate limiting
   const rateLimiter = rateLimit(rateLimitConfigs.vendorApi);
@@ -81,7 +81,7 @@ export async function POST(
     );
   }
 
-  const orderId = params.id;
+  const { id: orderId } = await params;
 
   // Validate order ID format
   if (!z.string().uuid().safeParse(orderId).success) {
@@ -347,12 +347,18 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = createClient();
 
-  // Similar authentication and validation as POST...
-  // For brevity, implementing basic unassign logic
+  if (!supabase) {
+    return NextResponse.json(
+      { error: 'Service unavailable', code: 'CONFIG_ERROR' },
+      { status: 500 }
+    );
+  }
+
+  const { id: orderId } = await params;
 
   const { data: updatedOrder, error } = await supabase
     .from('orders')
@@ -361,7 +367,7 @@ export async function DELETE(
       status: 'CONFIRMED',
       updated_at: new Date().toISOString(),
     })
-    .eq('id', params.id)
+    .eq('id', orderId)
     .select('id, status')
     .single();
 
@@ -374,7 +380,7 @@ export async function DELETE(
 
   return NextResponse.json(
     {
-      order_id: params.id,
+      order_id: orderId,
       courier_id: null,
       status: updatedOrder.status,
       unassigned_at: new Date().toISOString(),

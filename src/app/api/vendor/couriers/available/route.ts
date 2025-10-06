@@ -204,18 +204,23 @@ export async function GET(request: NextRequest) {
   // Format response
   const availableCouriers = (courierData || [])
     .filter(courier => !busyCouriers.includes(courier.id))
-    .map(courier => ({
-      id: courier.id,
-      user_id: courier.user_id,
-      name: courier.users?.metadata?.name || 'Kurye',
-      phone: courier.users?.phone || '',
-      vehicle_type: courier.vehicle_type,
-      shift_status: courier.shift_status,
-      current_location: courierLocations[courier.id] || null,
-      active_delivery: null,
-      completed_deliveries_today: courierStats[courier.id]?.completed_today || 0,
-      average_rating: courierStats[courier.id]?.rating || 4.5,
-    }));
+    .map(courier => {
+      // Safe access to user data
+      const userData = Array.isArray(courier.users) ? courier.users[0] : courier.users;
+      
+      return {
+        id: courier.id,
+        user_id: courier.user_id,
+        name: userData?.metadata?.name || 'Kurye',
+        phone: userData?.phone || '',
+        vehicle_type: courier.vehicle_type,
+        shift_status: courier.shift_status,
+        current_location: courierLocations[courier.id] || null,
+        active_delivery: null,
+        completed_deliveries_today: courierStats[courier.id]?.completed_today || 0,
+        average_rating: courierStats[courier.id]?.rating || 4.5,
+      };
+    });
 
   // Success response
   logEvent({

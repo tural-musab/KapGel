@@ -160,80 +160,84 @@ describe('Courier Location API Contract Tests', () => {
   })
 
   describe('Real-time Location Subscription', () => {
-    it('should receive location updates via subscription', (done) => {
-      const channel = supabase
-        .channel(`order:${testOrderId}:location`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'courier_locations',
-            filter: `order_id=eq.${testOrderId}`
-          },
-          (payload) => {
-            // Contract: Payload must have new record
-            expect(payload.new).toBeDefined()
+    it('should receive location updates via subscription', async () => {
+      return new Promise<void>((resolve) => {
+        const channel = supabase
+          .channel(`order:${testOrderId}:location`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'courier_locations',
+              filter: `order_id=eq.${testOrderId}`
+            },
+            (payload) => {
+              // Contract: Payload must have new record
+              expect(payload.new).toBeDefined()
 
-            // Contract: New record must have position
-            expect(payload.new).toHaveProperty('position')
-            expect(payload.new).toHaveProperty('courier_id')
-            expect(payload.new).toHaveProperty('order_id')
+              // Contract: New record must have position
+              expect(payload.new).toHaveProperty('position')
+              expect(payload.new).toHaveProperty('courier_id')
+              expect(payload.new).toHaveProperty('order_id')
 
-            // Cleanup and complete test
-            supabase.removeChannel(channel)
-            done()
-          }
-        )
-        .subscribe()
+              // Cleanup and complete test
+              supabase.removeChannel(channel)
+              resolve()
+            }
+          )
+          .subscribe()
 
-      // Trigger location insert after subscription is ready
-      setTimeout(async () => {
-        await supabase.rpc('insert_courier_location', {
-          _courier_id: testCourierId,
-          _lat: 40.4100,
-          _lng: 49.8680,
-          _order_id: testOrderId
-        })
-      }, 1000)
+        // Trigger location insert after subscription is ready
+        setTimeout(async () => {
+          await supabase.rpc('insert_courier_location', {
+            _courier_id: testCourierId,
+            _lat: 40.4100,
+            _lng: 49.8680,
+            _order_id: testOrderId
+          })
+        }, 1000)
+      })
     }, 10000) // 10 second timeout
 
-    it('should not receive updates for different orders', (done) => {
-      let receivedUpdate = false
+    it('should not receive updates for different orders', async () => {
+      return new Promise<void>((resolve) => {
+        let receivedUpdate = false
 
-      const channel = supabase
-        .channel(`order:other-order-id:location`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'courier_locations',
-            filter: `order_id=eq.other-order-id`
-          },
-          () => {
-            receivedUpdate = true
-          }
-        )
-        .subscribe()
+        const channel = supabase
+          .channel(`order:other-order-id:location`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'courier_locations',
+              filter: `order_id=eq.other-order-id`
+            },
+            () => {
+              receivedUpdate = true
+            }
+          )
+          .subscribe()
 
-      // Insert location for different order
-      setTimeout(async () => {
-        await supabase.rpc('insert_courier_location', {
-          _courier_id: testCourierId,
-          _lat: 40.4093,
-          _lng: 49.8671,
-          _order_id: testOrderId // Different order
-        })
+        // Insert location for different order
+        setTimeout(async () => {
+          await supabase.rpc('insert_courier_location', {
+            _courier_id: testCourierId,
+            _lat: 40.4093,
+            _lng: 49.8671,
+            _order_id: testOrderId // Different order
+          })
 
-        // Wait a bit then check
-        setTimeout(() => {
-          // Contract: Should not have received update
-          expect(receivedUpdate).toBe(false)
-          supabase.removeChannel(channel)
-          done()
-        }, 2000)
-      }, 1000)
+          // Wait a bit then check
+          setTimeout(() => {
+            // Contract: Should not have received update
+            expect(receivedUpdate).toBe(false)
+            supabase.removeChannel(channel)
+            resolve()
+          }, 2000)
+        }, 1000)
+      })
     }, 10000)
   })
 

@@ -94,7 +94,7 @@ export function LoginForm({ supabaseReady }: Props) {
             name="email"
             type="email"
             autoComplete="email"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-gray-500"
             placeholder="ornek@kapgel.com"
             value={form.email}
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
@@ -111,7 +111,7 @@ export function LoginForm({ supabaseReady }: Props) {
             name="password"
             type="password"
             autoComplete="current-password"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-gray-500"
             placeholder="••••••••"
             value={form.password}
             onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}

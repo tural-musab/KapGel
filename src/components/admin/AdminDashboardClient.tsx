@@ -570,7 +570,7 @@ export function AdminDashboardClient({
                         <td className="px-6 py-4 align-top text-xs text-gray-600">{formatDateInput(user.createdAt)}</td>
                         <td className="px-6 py-4 align-top">
                           <select
-                            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
                             value={selectedRole ?? ''}
                             onChange={(event) =>
                               setSelectedRoles((prev) => ({

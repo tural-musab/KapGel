@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure input and select elements have proper text color */
+input, select, textarea {
+  color: #111827; /* gray-900 */
+}
+
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: #6b7280; /* gray-500 */
+}

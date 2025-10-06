@@ -160,13 +160,13 @@ export function LandingClient({ cities, vendors, stats, supabaseReady, session }
               <div className="relative flex-1">
                 <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <select
-                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
                   value={selectedCity}
                   onChange={(event) => setSelectedCity(event.target.value)}
                 >
-                  <option value="">Şehir seç</option>
+                  <option value="" className="text-gray-500">Şehir seç</option>
                   {cities.map((city) => (
-                    <option key={city.id} value={city.name}>
+                    <option key={city.id} value={city.name} className="text-gray-900">
                       {city.name}
                     </option>
                   ))}
@@ -177,7 +177,7 @@ export function LandingClient({ cities, vendors, stats, supabaseReady, session }
                 <input
                   type="search"
                   placeholder="Restoran veya mutfak ara"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-gray-500"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />

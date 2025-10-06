@@ -38,25 +38,28 @@ Yeni bir developer için:
 
 ## 🚀 WEEK 5: Critical Implementation (ŞİMDİ)
 
-### Track 1: Courier Location API ⭐ (CRITICAL PATH)
-- [ ] **T024-1:** `app/api/courier/location/route.ts` oluştur
+### Track 1: Courier Location API ⭐ (CRITICAL PATH) ✅
+- [X] **T024-1:** `app/api/courier/location/route.ts` oluştur ✅
   - 📖 Contract: `specs/001-kapsam-roller-m/contracts/courier-location-api.md`
   - 🧪 Test: `tests/contract/courier-location-api.contract.test.ts`
-  - ⏱️ Süre: 3 gün
+  - ⏱️ Tamamlandı: 2025-10-06
   
-- [ ] **T024-2:** `insert_courier_location()` RPC function implement et
+- [X] **T024-2:** `insert_courier_location()` RPC function implement et ✅
   - 📖 Contract: Section "RPC Functions"
-  - 🗄️ Migration: Yeni migration oluştur
+  - 🗄️ Migration: `20251006000100_courier_location_rpc.sql`
   
-- [ ] **T024-3:** Coordinate validation ekle (lat/lng range checks)
+- [X] **T024-3:** Coordinate validation ekle (lat/lng range checks) ✅
   - 📖 Contract: Section "Validation Rules"
+  - ✓ Lat: -90 to 90, Lng: -180 to 180
+  - ✓ Heading: 0-360, Accuracy/Speed: >=0
   
-- [ ] **T024-4:** Courier shift status kontrolü ekle (only online couriers)
+- [X] **T024-4:** Courier shift status kontrolü ekle (only online couriers) ✅
   - 📖 RLS: `db/rls-complete.sql` (courier_locations policies)
+  - ✓ shift_status = 'online' validation
   
 - [ ] **T024-5:** Contract testleri çalıştır ve geç
   ```bash
-  npm run test:contract -- courier-location
+  pnpm test:contract -- courier-location
   ```
 
 ### Track 2: Vendor Dashboard 🏪 (PARALLEL)

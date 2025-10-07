@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { normalizeSelection, toPendingMetadata } from 'lib/auth/roles';
 import { createClient } from 'lib/supabase/server';
+import { createAdminClient } from 'lib/supabase/admin';
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -44,14 +45,32 @@ export async function POST(request: Request) {
     role: metadataRole,
   } as const;
 
-  const { error: userUpsertError } = await supabase.from('users').upsert(userRow, { onConflict: 'id' });
+  console.log('🔍 DEBUG: Attempting to upsert user:', {
+    userId: user.id,
+    email: user.email,
+    role: metadataRole,
+    authUid: user.id // Should match user.id
+  });
+
+  // Use admin client for users table operations to bypass RLS
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return NextResponse.json({ error: 'Admin client yapılandırması bulunamadı.' }, { status: 500 });
+  }
+
+  const { error: userUpsertError } = await adminClient.from('users').upsert(userRow, { onConflict: 'id' });
 
   if (userUpsertError) {
+    console.error('❌ User upsert error:', {
+      error: userUpsertError,
+      userId: user.id,
+      message: userUpsertError.message
+    });
     return NextResponse.json({ error: userUpsertError.message ?? 'Kullanıcı rolü kaydedilemedi.' }, { status: 500 });
   }
 
   if (metadataRole === 'vendor_admin_pending') {
-    const { error: vendorApplicationError } = await supabase
+    const { error: vendorApplicationError } = await adminClient
       .from('vendor_applications')
       .upsert(
         {
@@ -67,7 +86,7 @@ export async function POST(request: Request) {
   }
 
   if (metadataRole === 'courier_pending') {
-    const { error: courierApplicationError } = await supabase
+    const { error: courierApplicationError } = await adminClient
       .from('courier_applications')
       .upsert(
         {
@@ -82,45 +101,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // 🚀 DEVELOPMENT AUTO-APPROVAL
-  // In development, auto-approve applications for faster testing
-  if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_AUTO_APPROVE === 'true') {
-    const approvedRole = normalizedRole; // Convert pending to approved role
-    
-    // Update both metadata and database with approved role
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: { role: approvedRole },
-    });
 
-    if (!updateError) {
-      // Update database users table
-      await supabase.from('users').upsert(
-        { id: user.id, email: user.email, role: approvedRole },
-        { onConflict: 'id' }
-      );
-
-      // Update application status to approved
-      if (metadataRole === 'vendor_admin_pending') {
-        await supabase
-          .from('vendor_applications')
-          .update({ status: 'approved' })
-          .eq('user_id', user.id);
-      }
-
-      if (metadataRole === 'courier_pending') {
-        await supabase
-          .from('courier_applications')
-          .update({ status: 'approved' })
-          .eq('user_id', user.id);
-      }
-
-      return NextResponse.json({ 
-        metadataRole: approvedRole,
-        autoApproved: true,
-        message: 'Role approved automatically for development'
-      });
-    }
-  }
 
   return NextResponse.json({ metadataRole });
 }

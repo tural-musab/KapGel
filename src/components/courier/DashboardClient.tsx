@@ -66,6 +66,24 @@ function formatRelative(dateString: string) {
   return `${hours} sa önce`;
 }
 
+function getNextStatus(currentStatus: string): string {
+  const statusFlow: Record<string, string> = {
+    READY: 'PICKED_UP',
+    PICKED_UP: 'ON_ROUTE', 
+    ON_ROUTE: 'DELIVERED',
+  };
+  return statusFlow[currentStatus] || currentStatus;
+}
+
+function getActionLabel(currentStatus: string): string {
+  const actionLabels: Record<string, string> = {
+    READY: 'Pick Up Order',
+    PICKED_UP: 'Start Delivery',
+    ON_ROUTE: 'Mark as Delivered',
+  };
+  return actionLabels[currentStatus] || 'Update Status';
+}
+
 type CourierDashboardClientProps = {
   courier: Courier;
   assignedOrders: Order[];
@@ -80,6 +98,30 @@ export function CourierDashboardClient({
   const [locationSharing, setLocationSharing] = useState(false);
   const [locationInterval, setLocationInterval] = useState<number | null>(null);
   const [shiftLoading, setShiftLoading] = useState(false);
+
+  // T023-2: Order Status Transition
+  async function handleOrderTransition(orderId: string, newStatus: string) {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('Failed to update order status:', error);
+        alert('Failed to update order status');
+        return;
+      }
+
+      // Order will be updated via real-time subscription
+      // No need to manually update state
+    } catch (error) {
+      console.error('Order transition error:', error);
+      alert('Failed to update order status');
+    }
+  }
 
   // T023-3: Shift Management
   async function handleShiftToggle() {
@@ -372,8 +414,11 @@ export function CourierDashboardClient({
                 </span>
               </div>
             </div>
-            <button className="mt-4 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white hover:bg-orange-600">
-              Mark as Delivered
+            <button 
+              onClick={() => handleOrderTransition(activeOrder.id, getNextStatus(activeOrder.status))}
+              className="mt-4 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white hover:bg-orange-600"
+            >
+              {getActionLabel(activeOrder.status)}
             </button>
           </div>
         )}
@@ -425,9 +470,16 @@ export function CourierDashboardClient({
                       <p className="font-semibold text-gray-900">
                         {formatCurrency(order.total)}
                       </p>
-                      {order.status === 'DELIVERED' && (
+                      {order.status === 'DELIVERED' ? (
                         <CheckCircle className="ml-auto mt-1 h-5 w-5 text-green-600" />
-                      )}
+                      ) : ['READY', 'PICKED_UP', 'ON_ROUTE'].includes(order.status) ? (
+                        <button
+                          onClick={() => handleOrderTransition(order.id, getNextStatus(order.status))}
+                          className="mt-2 rounded-lg bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                        >
+                          {getActionLabel(order.status)}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>

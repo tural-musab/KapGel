@@ -8,6 +8,86 @@ This research log captures the key investigations required to deliver the KapGel
 
 ---
 
+## 0. Business Model: Vendor-Owned Courier System
+
+- **Question**: Should KapGel operate as a centralized logistics provider with a shared courier pool, or as a management platform for vendors with their own delivery staff?
+- **Investigation**:
+  - Analyzed market positioning against platforms like DoorDash, Uber Eats, and Getir that provide courier services.
+  - Evaluated operational complexity and liability of managing a courier workforce.
+  - Assessed target market of established local businesses that already have delivery capabilities but lack digital infrastructure.
+  - Reviewed technical implications: courier-vendor relationship in data model, RLS policies for courier isolation, vendor onboarding requirements.
+- **Decision**:
+  - **KapGel is a logistics management platform, NOT a logistics provider.**
+  - Only vendors with their own courier staff can join the platform.
+  - Each courier is associated with a single vendor (`couriers.vendor_id` foreign key).
+  - The platform provides order orchestration, tracking infrastructure, and customer experience tools.
+  - Vendors retain full control over courier management, scheduling, and service quality.
+  - This reduces operational complexity, liability, and positions KapGel as a B2B SaaS tool rather than a gig-economy platform.
+- **Follow-ups**:
+  - Add vendor onboarding checklist to verify courier capacity (minimum number of couriers, delivery zones coverage).
+  - Update KYC process to include proof of existing delivery operations.
+  - Document in marketing materials and vendor FAQs that platform does not provide courier services.
+  - Consider future "courier-as-a-service" integration for vendors who want to expand beyond their own staff (Phase 2+).
+
+---
+
+## 0.1. Business Type Classification Strategy
+
+- **Question**: Should we support multiple vendor types (restaurant vs market) from day one, or start with restaurants only?
+- **Investigation**:
+  - Analyzed schema flexibility: ENUM type allows adding new types without breaking changes
+  - Reviewed UI complexity: Type selection adds one step to onboarding
+  - Assessed business logic differences: Minimal for MVP (both need menu, orders, couriers)
+  - Evaluated analytics needs: Business intelligence requires type segmentation
+- **Decision**:
+  - **Add `business_type` ENUM to vendors table immediately**
+  - Types: `restaurant`, `market`, `grocery`, `cafe`
+  - Default: `restaurant` (MVP focus)
+  - MVP UI only shows "restaurant" option initially
+  - Schema future-proof: Markets can be enabled by UI change only
+  - Analytics ready: Reports can segment by type from day one
+- **Technical Implementation**:
+  - Create ENUM type: `vendor_business_type`
+  - Add column: `vendors.business_type` with default `restaurant`
+  - Seed data: All test vendors start as restaurants
+  - UI: Onboarding shows business type selection (restaurant only for MVP)
+- **Follow-ups**:
+  - Phase 2: Enable market option in onboarding UI
+  - Phase 2: Different commission rates per business type
+  - Phase 3: Type-specific features (e.g., prescription upload for pharmacies)
+  - Monitor: Track conversion rates by business type
+
+---
+
+## 0.2. Courier Onboarding Flow Evolution
+
+- **Question**: Should couriers apply independently via `courier_applications` table, or should vendor admins add them directly?
+- **Investigation**:
+  - Analyzed current schema: `courier_applications` exists and is actively used in admin dashboard
+  - Reviewed business model: "Vendor-owned couriers" means employment relationship with vendor, not platform
+  - Assessed user experience: Independent application doesn't align with vendor-managed model
+  - Evaluated transition complexity: Current admin UI depends on `courier_applications`
+- **Decision**:
+  - **Gradual transition approach** (not immediate removal)
+  - Phase 1: Keep `courier_applications` functional (current Week 6)
+  - Phase 2: Implement vendor admin "Add Courier" functionality (Week 7-8)
+  - Phase 3: Migrate existing data and deprecate `courier_applications` (Week 9+)
+- **Rationale**:
+  - Aligns with "vendor manages own couriers" principle
+  - Reduces admin overhead (one approval instead of two)
+  - Simpler user journey for established businesses
+  - Risk mitigation: No breaking changes during MVP phase
+- **Technical Implementation Plan**:
+  - Phase 2: Vendor dashboard "Team Management" section
+  - Phase 2: Direct courier creation + email invitation system
+  - Phase 3: Data migration script + table deprecation
+- **Follow-ups**:
+  - Phase 2: Vendor dashboard "Add Courier" functionality
+  - Phase 2: Courier invitation email templates
+  - Phase 3: Safe migration path for existing courier applications
+
+---
+
 ## 1. MapLibre + Next.js App Router
 
 - **Question**: How do we embed MapLibre maps inside a Next.js 15 App Router project without breaking server rendering or increasing bundle size excessively?

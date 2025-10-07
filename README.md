@@ -1,9 +1,44 @@
 # KapGel MVP
 
-KapGel is a full-stack web platform that enables local restaurants and markets to accept delivery or pickup orders with live courier tracking. This repository hosts the MVP implementation built with Next.js 15, Supabase, and a service-worker-powered PWA experience for customers, vendor admins, couriers, and platform operators.
+KapGel is a full-stack web platform that enables local restaurants and markets **with their own courier staff** to accept delivery or pickup orders with live courier tracking. Unlike traditional delivery platforms that provide centralized courier pools, KapGel is a **logistics management platform** where each vendor manages and dispatches their own delivery team. This repository hosts the MVP implementation built with Next.js 15, Supabase, and a service-worker-powered PWA experience for customers, vendor admins, couriers, and platform operators.
+
+## 🎯 Unique Value Proposition
+
+**KapGel is NOT a logistics provider** — it's a logistics management tool. Key differentiators:
+
+- **Vendor-Owned Couriers**: Only businesses with their own delivery staff can join the platform. No shared courier pool, no platform-managed logistics.
+- **Full Logistics Control**: Vendors maintain complete control over their delivery operations, staff scheduling, and service quality.
+- **Management Platform**: KapGel provides the order orchestration, real-time tracking infrastructure, and customer-facing experience — vendors provide the delivery capability.
+- **Target Market**: Established local restaurants and markets that already have delivery staff but need better digital tools to manage orders and customer experience.
+
+## 📖 Terminology
+
+Understanding the key roles and entities in KapGel:
+
+### **Business Entities**
+- **Vendor**: A business entity (restaurant, market, cafe) that joins the platform to manage orders and deliveries
+- **Branch**: A physical location of a vendor where orders are prepared and dispatched
+
+### **User Roles**
+- **Customer**: End users who browse menus, place orders, and track deliveries
+- **Vendor Admin**: A person who manages a vendor's operations (menu, orders, courier assignments, analytics)
+- **Courier**: A delivery person employed by a specific vendor (not shared across vendors)
+- **Platform Admin**: System administrators who manage vendor approvals and platform operations
+
+### **Key Distinctions**
+- **Vendor** = The business | **Vendor Admin** = The person managing that business
+- **Courier Ownership**: Each courier belongs to exactly one vendor (no shared courier pool)
+- **Management**: Vendor admins assign their own couriers to orders (KapGel provides tools, not couriers)
+
+### **Order Flow**
+1. **Customer** places order at a **vendor's branch**
+2. **Vendor admin** confirms order and assigns their **courier**
+3. **Courier** picks up and delivers to **customer**
+4. Platform provides tracking and communication tools throughout
 
 ## 🚀 Feature Overview
 
+- **Vendor-managed courier system**: Each vendor operates with their own courier staff (no shared courier pool).
 - Role-specific dashboards for customers, vendor admins, couriers, and admins (vendor/courier panels in progress).
 - Real-time order orchestration backed by Supabase Realtime and an `order_events` timeline.
 - MapLibre + OpenStreetMap integration for delivery zones and courier location tracking.

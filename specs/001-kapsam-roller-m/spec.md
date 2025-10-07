@@ -61,6 +61,8 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 - **FR-011**: The system MUST support a hierarchical address structure of `City > District > Neighborhood`.
 - **FR-012**: Vendor branches MUST be able to define their delivery zones using a GeoJSON Polygon or MultiPolygon.
 - **FR-013**: The system MUST include a manual KYC (Know Your Customer) process for vendor verification, requiring document uploads and admin approval.
+- **FR-014**: The system MUST enforce that only vendors with their own courier staff can operate on the platform. Each courier MUST be associated with a single vendor (no shared courier pool across vendors).
+- **FR-015**: The platform MUST NOT provide centralized courier management or dispatch services. All courier assignment and management is the vendor's responsibility.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -82,7 +84,7 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 
 ## Product Overview & Goals
 
-- **Value Proposition**: KapGel enables local restaurants and markets to offer rapid delivery and pickup without building their own logistics stack. Customers gain a reliable ordering experience with real-time tracking.
+- **Value Proposition**: KapGel enables local restaurants and markets **that already have their own delivery staff** to digitize and streamline their operations without building complex logistics software. Unlike centralized delivery platforms (e.g., DoorDash, Uber Eats) that manage courier pools, KapGel is a **logistics management platform** where vendors maintain full control over their own couriers. The platform provides order orchestration, real-time tracking infrastructure, and customer-facing tools, while vendors provide the delivery capability. Customers gain a reliable ordering experience with real-time tracking directly from the business they trust.
 - **Business Outcomes**: Increase order completion rate, support at least 20 concurrent vendors per city, and provide auditable courier performance data for operations teams.
 - **MVP Success Criteria**:
   - First vendor onboarded with at least one active branch.
@@ -91,10 +93,10 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 
 ## Personas & Experience Principles
 
-- **Customer (B2C)**: Prioritises fast search, clear delivery expectations, and frictionless reorder flow.
-- **Vendor Admin (B2B)**: Needs dashboard clarity, status prioritisation, and easy courier assignment.
-- **Courier (Operations)**: Requires quick task triage, mobile-friendly controls, and minimal data entry.
-- **System Admin**: Oversees vendor onboarding, dispute resolution, and platform health.
+- **Customer (B2C)**: Prioritises fast search, clear delivery expectations, and frictionless reorder flow. Orders directly from local businesses they know and trust.
+- **Vendor Admin (B2B)**: Owns and manages their own delivery team. Needs dashboard clarity, status prioritisation, and easy courier assignment **from their own courier staff**. Unlike platforms with shared courier pools, they have full control and visibility over their team's performance.
+- **Courier (Operations)**: Works exclusively for a single vendor. Requires quick task triage, mobile-friendly controls, and minimal data entry. Their employment relationship is with the vendor, not the platform.
+- **System Admin**: Oversees vendor onboarding (verifying they have courier capacity), dispute resolution, and platform health. Does NOT manage courier operations or assignments.
 
 **Experience Principles**
 - Surfaces next-best action within 3 taps/clicks.

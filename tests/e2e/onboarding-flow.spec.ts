@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const baseURL = 'http://localhost:3000';
+const baseURL = 'http://localhost:3001'; // Updated port
 
 function cookie(name: string, value: string) {
   return {

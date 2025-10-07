@@ -13,7 +13,7 @@ This document details the relational schema, lifecycle state machines, and acces
 | Domain | Entity | Purpose | Key Fields |
 | --- | --- | --- | --- |
 | Identity | `users` | All authenticated actors. | `role`, `phone`, `email`, `created_at` |
-| Vendors | `vendors` | Legal business; ties to owner. | `tax_no`, `owner_user_id`, `verified` |
+| Vendors | `vendors` | Legal business; ties to owner. | `business_type`, `tax_no`, `owner_user_id`, `verified` |
 | Vendors | `branches` | Physical fulfilment location. | `vendor_id`, `address_text`, `geo_point`, `delivery_zone_geojson` |
 | Vendors | `categories`, `products`, `inventories` | Menu management + stock rules per branch. | Category `sort`, product `price`, inventory `stock_policy` |
 | Couriers | `couriers` | Delivery workforce assigned per vendor. | `user_id`, `vendor_id`, `shift_status`, `vehicle_type` |
@@ -116,7 +116,25 @@ CONFIRMED/PREPARING -> CANCELED_BY_VENDOR
 
 ---
 
+## 6. Data Integrity Rules
+
+1. **Menu Consistency**: `order_items.name_snapshot` ensures historical accuracy even if product name/price changes.
+2. **Geospatial Validity**: `branches.delivery_zone_geojson` must pass GeoJSON validation; add constraint using `ST_IsValid`.
+3. **Payment Modes**: For MVP only `cash` and `card_on_pickup` (POS) are enabled; reject others at API layer.
+4. **Courier Availability**: Only one active courier assignment per order; enforce unique partial index on `orders (id) WHERE courier_id IS NOT NULL`.
+5. **Notification Tokens**: Unique constraint on (`user_id`, `channel`, `token_or_addr`) to prevent duplicates.
+6. **Business Type Classification**: All vendors must specify a `business_type` from the enum (restaurant, market, grocery, cafe). This enables future feature differentiation and analytics segmentation. MVP focuses on restaurants but schema supports market expansion.
+
+---
+
 ## 7. Migration Backlog
+
+- ~~Add PostGIS extension migration~~ ✅ DONE
+- ~~Introduce `order_eta_minutes` field~~ Phase 2
+- ~~Add `documents` table for vendor KYC~~ Phase 2
+- ~~Create `service_levels` table~~ Phase 2
+- **Add `business_type` enum to vendors table** ← PLANNED (Week 6) - Enable market/grocery expansion without schema changes
+- **Alternative courier onboarding via vendor admin** ← PLANNED (Week 7-8) - Vendor admin adds couriers directly, then deprecate `courier_applications`
 
 - Add PostGIS extension migration (`CREATE EXTENSION IF NOT EXISTS postgis;`).
 - Introduce `order_eta_minutes` field derived from courier routing (nullable).  _Needed for SLA dashboards._

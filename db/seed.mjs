@@ -33,7 +33,13 @@ async function main() {
 
   // Create Vendor
   const { data: vendor, error: vendorError } = await supabase.from('vendors').insert([
-    { name: 'Lezzetli Burger', owner_user_id: vendorAdmin.id, has_own_couriers: true, verified: true },
+    { 
+      name: 'Lezzetli Burger', 
+      owner_user_id: vendorAdmin.id, 
+      has_own_couriers: true, 
+      verified: true,
+      business_type: 'restaurant'
+    },
   ]).select().single();
 
   if (vendorError) {

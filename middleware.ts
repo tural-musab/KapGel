@@ -39,21 +39,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Get user role from database
-  const { data: dbUser } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  // Get user role from metadata first (more reliable), then fallback to database
+  let userRole = user.user_metadata?.role || user.app_metadata?.role;
+  
+  // If no role in metadata, check database
+  if (!userRole) {
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
 
-  if (!dbUser?.role) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    userRole = dbUser?.role;
+  }
+
+  if (!userRole) {
+    return NextResponse.redirect(new URL('/onboarding/role', request.url))
   }
 
   // Check role-based access
   for (const [route, allowedRoles] of Object.entries(PROTECTED_ROUTES)) {
     if (pathname.startsWith(route)) {
-      if (!allowedRoles.includes(dbUser.role)) {
+      if (!allowedRoles.includes(userRole)) {
         // Redirect to appropriate dashboard based on role
         const roleDashboards: Record<string, string> = {
           'customer': '/',
@@ -62,7 +69,7 @@ export async function middleware(request: NextRequest) {
           'admin': '/admin',
         }
         
-        const redirectPath = roleDashboards[dbUser.role] || '/'
+        const redirectPath = roleDashboards[userRole] || '/onboarding/role'
         return NextResponse.redirect(new URL(redirectPath, request.url))
       }
     }

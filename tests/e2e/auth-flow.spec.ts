@@ -10,8 +10,8 @@ test.describe("Auth pages", () => {
     await expect(page.getByRole("button", { name: "Giriş Yap" })).toBeEnabled();
     
     // Check form fields are present
-    await expect(page.getByLabelText("E-posta")).toBeVisible();
-    await expect(page.getByLabelText("Şifre")).toBeVisible();
+    await expect(page.getByLabel("E-posta")).toBeVisible();
+    await expect(page.getByLabel("Şifre")).toBeVisible();
     
     // Check register link is present
     await expect(page.getByRole("link", { name: "Kayıt Ol" })).toBeVisible();
@@ -26,9 +26,9 @@ test.describe("Auth pages", () => {
     await expect(page.getByRole("button", { name: "Kayıt Ol" })).toBeEnabled();
     
     // Check form fields are present
-    await expect(page.getByLabelText("Ad Soyad")).toBeVisible();
-    await expect(page.getByLabelText("E-posta")).toBeVisible();
-    await expect(page.getByLabelText("Şifre")).toBeVisible();
+    await expect(page.getByLabel("Ad Soyad")).toBeVisible();
+    await expect(page.getByLabel("E-posta")).toBeVisible();
+    await expect(page.getByLabel("Şifre")).toBeVisible();
     
     // Check login link is present
     await expect(page.getByRole("link", { name: "Giriş Yap" })).toBeVisible();

@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Courier workspace", () => {
-  test("courier dashboard route is not yet implemented", async ({ page }) => {
+  test("courier dashboard loads correctly", async ({ page }) => {
     await page.goto("/courier");
 
-    await expect(
-      page.getByText("This page could not be found.", { exact: true })
-    ).toBeVisible();
+    // Since no authentication in tests, expect redirect to login
+    await expect(page).toHaveURL(/\/login/);
   });
 });

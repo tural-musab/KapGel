@@ -17,12 +17,19 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep a11y",
+    "test:perf": "lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json",
+    "build:analyze": "ANALYZE=true next build",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
     "db:push": "supabase db push",
     "db:migrate": "supabase migration up",
     "db:seed": "node db/seed.mjs",
+    "db:seed:modern": "node db/seed-modern.mjs",
     "db:seed:test": "NODE_ENV=test node db/seed.mjs",
+    "db:cleanup": "node db/cleanup-users.mjs",
+    "db:cleanup-auth": "node db/cleanup-auth-users.mjs",
+    "db:check-auth": "node db/check-auth-users.mjs",
     "precommit": "pnpm lint && pnpm typecheck && pnpm test:contract"
   },
   "dependencies": {
@@ -30,12 +37,17 @@
     "@sentry/nextjs": "^10.17.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
+    "@types/maplibre-gl": "^1.13.2",
+    "@upstash/redis": "^1.35.5",
     "@vitejs/plugin-react": "^5.0.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
     "eslint-plugin-react-hooks": "^6.1.1",
     "lucide-react": "^0.544.0",
+    "maplibre-gl": "^5.8.0",
     "next": "15.5.4",
+    "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwindcss-animate": "^1.0.7",
@@ -44,6 +56,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.8.0",
@@ -52,12 +65,16 @@
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
+    "@vitest/coverage-v8": "3.2.4",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "eslint-plugin-react": "^7.37.5",
     "jsdom": "^27.0.0",
+    "k6": "^0.0.0",
+    "lighthouse": "^12.8.2",
     "supabase": "^2.47.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

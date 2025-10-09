@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 
 import { OrderTimeline } from '@/components/ui/dashboard/order-timeline';
 import type { TimelineState } from '@/components/ui/dashboard/order-timeline';
 import { createClient } from 'lib/supabase/client';
+
+// Dynamic import for Map component (client-side only)
+const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'en_route' | 'delivered' | 'cancelled';
 
@@ -36,6 +40,9 @@ export interface OrderTrackingClientProps {
   items: TrackingItem[];
   total: number;
   supabaseReady: boolean;
+  branchLocation?: { lat: number; lng: number; name?: string } | null;
+  deliveryAddress?: { lat: number; lng: number; text?: string } | null;
+  courierId?: string | null;
 }
 
 function statusToTimeline(status: OrderStatus) {
@@ -61,9 +68,26 @@ function statusToTimeline(status: OrderStatus) {
   });
 }
 
-export function OrderTrackingClient({ orderId, initialStatus, items, total, supabaseReady }: OrderTrackingClientProps) {
+export function OrderTrackingClient({
+  orderId,
+  initialStatus,
+  items,
+  total,
+  supabaseReady,
+  branchLocation,
+  deliveryAddress,
+  courierId
+}: OrderTrackingClientProps) {
   const [status, setStatus] = useState<OrderStatus>(initialStatus);
+  const [courierPosition, setCourierPosition] = useState<{
+    lat: number;
+    lng: number;
+    heading?: number;
+    accuracy?: number;
+    timestamp?: string;
+  } | null>(null);
 
+  // Subscribe to order status updates
   useEffect(() => {
     if (!supabaseReady) return;
     const client = createClient();
@@ -114,6 +138,85 @@ export function OrderTrackingClient({ orderId, initialStatus, items, total, supa
       void client.removeChannel(channel);
     };
   }, [orderId, supabaseReady]);
+
+  // Subscribe to courier location updates (real-time tracking)
+  useEffect(() => {
+    if (!supabaseReady || !courierId || status !== 'en_route') return;
+
+    const client = createClient();
+    if (!client) return;
+
+    // Fetch initial courier location
+    const fetchInitialLocation = async () => {
+      const { data } = await client
+        .from('courier_locations')
+        .select('*')
+        .eq('courier_id', courierId)
+        .eq('order_id', orderId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        // Extract coordinates from PostGIS geography
+        const lat = data.latitude ?? 0;
+        const lng = data.longitude ?? 0;
+
+        setCourierPosition({
+          lat,
+          lng,
+          heading: data.heading ?? undefined,
+          accuracy: data.accuracy ?? undefined,
+          timestamp: data.updated_at,
+        });
+      }
+    };
+
+    void fetchInitialLocation();
+
+    // Subscribe to real-time location updates
+    const channel = client
+      .channel(`courier_location:${courierId}:${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'courier_locations',
+          filter: `courier_id=eq.${courierId}`,
+        },
+        (payload) => {
+          const newLocation = payload.new as {
+            order_id?: string;
+            latitude?: number;
+            longitude?: number;
+            heading?: number;
+            accuracy?: number;
+            speed?: number;
+            updated_at?: string;
+          };
+
+          // Only update if this location is for the current order
+          if (newLocation.order_id === orderId) {
+            const lat = newLocation.latitude ?? 0;
+            const lng = newLocation.longitude ?? 0;
+
+            setCourierPosition({
+              lat,
+              lng,
+              heading: newLocation.heading ?? undefined,
+              accuracy: newLocation.accuracy ?? undefined,
+              timestamp: newLocation.updated_at,
+            });
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [orderId, courierId, status, supabaseReady]);
 
   const timeline = useMemo(() => statusToTimeline(status), [status]);
 
@@ -179,12 +282,44 @@ export function OrderTrackingClient({ orderId, initialStatus, items, total, supa
           </div>
         </section>
 
-        <section className="rounded-lg border p-4 xl:col-span-3">
-          <h2 className="text-2xl font-semibold mb-4">Harita</h2>
-          <div className="flex h-48 items-center justify-center rounded bg-gray-100 text-sm text-gray-500">
-            Harita bileşeni yakında eklenecek
-          </div>
-        </section>
+        {(branchLocation || deliveryAddress || courierPosition) && (
+          <section className="rounded-lg border p-4 xl:col-span-3">
+            <h2 className="text-2xl font-semibold mb-4">Canlı Takip</h2>
+            <Map
+              center={
+                courierPosition
+                  ? [courierPosition.lng, courierPosition.lat]
+                  : deliveryAddress
+                  ? [deliveryAddress.lng, deliveryAddress.lat]
+                  : branchLocation
+                  ? [branchLocation.lng, branchLocation.lat]
+                  : undefined
+              }
+              zoom={14}
+              courierPosition={courierPosition}
+              deliveryAddress={
+                deliveryAddress
+                  ? {
+                      lat: deliveryAddress.lat,
+                      lng: deliveryAddress.lng,
+                      label: deliveryAddress.text ?? 'Teslimat Adresi',
+                    }
+                  : undefined
+              }
+              branchLocation={
+                branchLocation
+                  ? {
+                      lat: branchLocation.lat,
+                      lng: branchLocation.lng,
+                      label: branchLocation.name ?? 'Restoran',
+                    }
+                  : undefined
+              }
+              height="h-96"
+              width="w-full"
+            />
+          </section>
+        )}
       </main>
     </div>
   );

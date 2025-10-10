@@ -5,7 +5,7 @@ import { createClient } from 'lib/supabase/server';
 import { createAdminClient } from 'lib/supabase/admin';
 import type { SupabaseClient, PostgrestSingleResponse } from '@supabase/supabase-js';
 
-type DbOperation<T> = (client: SupabaseClient) => Promise<PostgrestSingleResponse<T>>;
+type DbOperation<T> = (client: SupabaseClient) => PromiseLike<PostgrestSingleResponse<T>>;
 
 async function runWithFallback<T>(
   primary: SupabaseClient,

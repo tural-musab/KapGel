@@ -45,75 +45,85 @@ function toNumber(value: number | string | null | undefined) {
 
 export default async function VendorDashboardPage() {
   const { supabase, user } = await requireRole(['vendor_admin', 'admin']);
+  const adminClient = createAdminClient();
 
-  // Get vendor
-  const { data: vendorRows, error: vendorFetchError } = await supabase
-    .from('vendors')
-    .select('id,name')
-    .eq('owner_user_id', user.id);
+  let vendors: VendorRow[] = [];
 
-  if (vendorFetchError) {
-    console.error('Vendor fetch error', vendorFetchError);
-  }
-  let vendors = (vendorRows ?? []) as VendorRow[];
-  let vendorIds = vendors.map((vendor) => vendor.id);
+  if (adminClient) {
+    const { data: adminVendorRows, error: adminVendorError } = await adminClient
+      .from('vendors')
+      .select('id,name')
+      .eq('owner_user_id', user.id);
 
-  if (vendorIds.length === 0) {
-    const adminClient = createAdminClient();
-
-    if (adminClient) {
-      const { data: vendorInfo } = await adminClient
-        .from('vendor_applications')
-        .select('business_name,status')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const isApproved = vendorInfo?.status === 'approved';
-      const fallbackName =
-        vendorInfo?.business_name?.trim()?.length
-          ? vendorInfo?.business_name.trim()
-          : user.email?.split('@')[0] ?? `Vendor ${user.id.slice(0, 8)}`;
-
-      if (isApproved) {
-        const { error: insertError } = await adminClient
-          .from('vendors')
-          .insert({
-            owner_user_id: user.id,
-            name: fallbackName,
-            verified: false,
-          });
-
-        if (!insertError) {
-          const { data: refreshedVendors } = await supabase
-            .from('vendors')
-            .select('id,name')
-            .eq('owner_user_id', user.id);
-
-          if (insertError && insertError.code !== '23505') {
-            console.error('Vendor insert failed in dashboard self-heal', {
-              userId: user.id,
-              message: insertError.message,
-              code: insertError.code,
-            });
-          }
-
-          vendors = (refreshedVendors ?? []) as VendorRow[];
-          vendorIds = vendors.map((vendor) => vendor.id);
-        }
-      }
+    if (adminVendorError) {
+      console.error('Admin vendor fetch error', adminVendorError);
     }
 
-    if (vendorIds.length === 0) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-white to-red-50">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Vendor Bulunamadı</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Bu hesap ile ilişkili bir vendor bulunamadı.
-            </p>
-          </div>
-        </div>
-      );
+    vendors = (adminVendorRows ?? []).map((vendor) => ({
+      id: vendor.id,
+      name: vendor.name ?? null,
+    }));
+  } else {
+    const { data: vendorRows, error: vendorFetchError } = await supabase
+      .from('vendors')
+      .select('id,name')
+      .eq('owner_user_id', user.id);
+
+    if (vendorFetchError) {
+      console.error('Vendor fetch error', vendorFetchError);
+    }
+
+    vendors = (vendorRows ?? []) as VendorRow[];
+  }
+
+  let vendorIds = vendors.map((vendor) => vendor.id);
+
+  if (vendorIds.length === 0 && adminClient) {
+    const { data: vendorInfo } = await adminClient
+      .from('vendor_applications')
+      .select('business_name,status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const isApproved = vendorInfo?.status === 'approved';
+    const fallbackName =
+      vendorInfo?.business_name?.trim()?.length
+        ? vendorInfo?.business_name.trim()
+        : user.email?.split('@')[0] ?? `Vendor ${user.id.slice(0, 8)}`;
+
+    if (isApproved) {
+      const { error: insertError } = await adminClient
+        .from('vendors')
+        .insert({
+          owner_user_id: user.id,
+          name: fallbackName,
+          verified: false,
+        });
+
+      if (insertError && insertError.code !== '23505') {
+        console.error('Vendor insert failed in dashboard self-heal', {
+          userId: user.id,
+          message: insertError.message,
+          code: insertError.code,
+        });
+      }
+
+      if (!insertError || insertError?.code === '23505') {
+        const { data: refreshedVendors, error: refreshedVendorError } = await adminClient
+          .from('vendors')
+          .select('id,name')
+          .eq('owner_user_id', user.id);
+
+        if (refreshedVendorError) {
+          console.error('Vendor refetch error after insert', refreshedVendorError);
+        }
+
+        vendors = (refreshedVendors ?? []).map((vendor) => ({
+          id: vendor.id,
+          name: vendor.name ?? null,
+        }));
+        vendorIds = vendors.map((vendor) => vendor.id);
+      }
     }
   }
 

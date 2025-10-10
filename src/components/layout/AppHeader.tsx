@@ -19,17 +19,16 @@ export function AppHeader({ brandHref = '/', rightSlot, className }: AppHeaderPr
     <header className={`flex items-center justify-between px-6 py-4 ${className ?? ''}`}>
       <Link
         href={brandHref}
-        className="inline-flex items-center gap-2 text-lg font-semibold text-gray-900 transition hover:text-orange-600"
+        className="inline-flex items-center transition hover:opacity-90"
       >
         <Image
-          src="/icons/icon-32x32.png"
+          src="/icons/icon-192x192.png"
           alt="KapGel"
-          width={32}
-          height={32}
-          className="h-10 w-10 rounded-lg"
+          width={48}
+          height={48}
+          className="h-12 w-12 rounded-xl"
           priority
         />
-        KapGel
       </Link>
 
       {rightSlot ? (

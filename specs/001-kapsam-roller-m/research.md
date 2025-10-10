@@ -43,7 +43,7 @@ This research log captures the key investigations required to deliver the KapGel
   - **Add `business_type` ENUM to vendors table immediately**
   - Types: `restaurant`, `market`, `grocery`, `cafe`
   - Default: `restaurant` (MVP focus)
-  - MVP UI only shows "restaurant" option initially
+  - MVP UI only shows "restaurant" ve "cafe" seçeneklerini aktif olarak sunar; diğer tipler disable edilip "yakında" uyarısı verir
   - Schema future-proof: Markets can be enabled by UI change only
   - Analytics ready: Reports can segment by type from day one
 - **Technical Implementation**:

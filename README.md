@@ -39,6 +39,7 @@ Understanding the key roles and entities in KapGel:
 ## 🚀 Feature Overview
 
 - **Vendor-managed courier system**: Each vendor operates with their own courier staff (no shared courier pool).
+- **Başvuru merkezli işletme onboarding**: Vendor adayları kayıt sonrası başvuru formu doldurur, admin onayıyla vendor paneline geçilir.
 - Role-specific dashboards for customers, vendor admins, couriers, and admins (vendor/courier panels in progress).
 - Real-time order orchestration backed by Supabase Realtime and an `order_events` timeline.
 - MapLibre + OpenStreetMap integration for delivery zones and courier location tracking.
@@ -93,6 +94,14 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
    pnpm db:seed
    ```
    Supabase migrations now live in `supabase/migrations/`. The SQL support files under `db/` (schema snapshot, RLS helpers, seeds, and the read-only `schema.ts` type stubs) should be kept in sync by running the Supabase CLI workflow above.
+
+   > 🛠️ **Remote project senkron uyarısı**: Eğer Supabase üretim/staging projesinde daha önceki migration'lar (ör. `20250110000000`, `20250110000100`, `20250119000100`) işaretlenmemişse CLI aşağıdaki komutlarla geçmişi onarın ve sonra yeni migration'ı uygulayın:
+   > ```bash
+   > supabase migration repair --status applied 20250110000000
+   > supabase migration repair --status applied 20250110000100
+   > supabase migration repair --status applied 20250119000100
+   > supabase db push --include-all
+   > ```
 4. **Run the App**
    ```bash
    pnpm dev

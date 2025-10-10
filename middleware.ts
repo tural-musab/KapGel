@@ -16,6 +16,7 @@ const PUBLIC_ROUTES = [
   '/register',
   '/auth/callback',
   '/api/auth',
+  '/vendor/apply',
 ]
 
 export async function middleware(request: NextRequest) {
@@ -54,7 +55,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!userRole) {
-    return NextResponse.redirect(new URL('/onboarding/role', request.url))
+    return NextResponse.redirect(new URL('/vendor/apply', request.url))
   }
 
   // Check role-based access
@@ -63,13 +64,15 @@ export async function middleware(request: NextRequest) {
       if (!allowedRoles.includes(userRole)) {
         // Redirect to appropriate dashboard based on role
         const roleDashboards: Record<string, string> = {
-          'customer': '/',
+          'customer': '/dashboard',
           'vendor_admin': '/vendor',
+          'vendor_admin_pending': '/vendor/apply',
           'courier': '/courier',
+          'courier_pending': '/courier',
           'admin': '/admin',
         }
-        
-        const redirectPath = roleDashboards[userRole] || '/onboarding/role'
+
+        const redirectPath = roleDashboards[userRole] || '/vendor/apply'
         return NextResponse.redirect(new URL(redirectPath, request.url))
       }
     }

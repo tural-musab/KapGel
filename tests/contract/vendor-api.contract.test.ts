@@ -16,7 +16,7 @@ let testVendorId: string
 let testBranchId: string
 let testCategoryId: string
 let testProductId: string
-let vendorToken: string
+let vendorToken: string = 'test-vendor-token'
 
 const supabase = createClient(TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY)
 

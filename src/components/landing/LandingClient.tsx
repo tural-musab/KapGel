@@ -92,7 +92,7 @@ export function LandingClient({ cities, vendors, stats, supabaseReady, session }
               {session.role ? (
                 session.needsOnboarding ? (
                   <Link
-                    href="/onboarding/role"
+                    href="/vendor/apply"
                     className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
                   >
                     Rolünü Tamamla

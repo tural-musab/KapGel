@@ -736,6 +736,8 @@ export type Database = {
       vendor_applications: {
         Row: {
           business_name: string | null
+          business_type: Database["public"]["Enums"]["vendor_business_type"]
+          contact_phone: string | null
           created_at: string | null
           id: string
           status: Database["public"]["Enums"]["application_status"]
@@ -744,6 +746,8 @@ export type Database = {
         }
         Insert: {
           business_name?: string | null
+          business_type?: Database["public"]["Enums"]["vendor_business_type"]
+          contact_phone?: string | null
           created_at?: string | null
           id?: string
           status?: Database["public"]["Enums"]["application_status"]
@@ -752,6 +756,8 @@ export type Database = {
         }
         Update: {
           business_name?: string | null
+          business_type?: Database["public"]["Enums"]["vendor_business_type"]
+          contact_phone?: string | null
           created_at?: string | null
           id?: string
           status?: Database["public"]["Enums"]["application_status"]
@@ -776,6 +782,7 @@ export type Database = {
           name: string
           owner_user_id: string | null
           tax_no: string | null
+          business_type: Database["public"]["Enums"]["vendor_business_type"]
           verified: boolean | null
         }
         Insert: {
@@ -785,6 +792,7 @@ export type Database = {
           name: string
           owner_user_id?: string | null
           tax_no?: string | null
+          business_type?: Database["public"]["Enums"]["vendor_business_type"]
           verified?: boolean | null
         }
         Update: {
@@ -794,6 +802,7 @@ export type Database = {
           name?: string
           owner_user_id?: string | null
           tax_no?: string | null
+          business_type?: Database["public"]["Enums"]["vendor_business_type"]
           verified?: boolean | null
         }
         Relationships: [
@@ -2659,6 +2668,7 @@ export type Database = {
       order_type: "delivery" | "pickup"
       payment_method: "cash" | "card_on_pickup"
       plan_type: "fixed" | "revenue_target"
+      vendor_business_type: "restaurant" | "market" | "grocery" | "cafe" | "pharmacy"
     }
     CompositeTypes: {
       geometry_dump: {

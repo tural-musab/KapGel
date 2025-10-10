@@ -6,6 +6,8 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE TYPE vendor_business_type AS ENUM ('restaurant', 'market', 'grocery', 'cafe', 'pharmacy');
+
 CREATE TABLE vendors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -13,6 +15,7 @@ CREATE TABLE vendors (
     owner_user_id UUID REFERENCES users(id),
     is_pickup_enabled BOOLEAN DEFAULT false,
     has_own_couriers BOOLEAN DEFAULT false,
+    business_type vendor_business_type DEFAULT 'restaurant',
     verified BOOLEAN DEFAULT false
 );
 
@@ -117,6 +120,8 @@ CREATE TABLE vendor_applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     business_name TEXT,
+    business_type vendor_business_type NOT NULL DEFAULT 'restaurant',
+    contact_phone TEXT,
     status application_status NOT NULL DEFAULT 'pending',
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),

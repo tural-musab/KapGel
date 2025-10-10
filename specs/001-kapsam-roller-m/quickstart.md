@@ -144,7 +144,7 @@ Welcome aboard! Ship safely and keep the constitution checks green.
 
 ## 8. Admin Panel Workflows
 
-- **Giriş ve Yetkilendirme**: `/admin` rotası sadece Supabase oturumunda `role = 'admin'` olan kullanıcıları kabul eder. Guard, doğrulanmamış kullanıcıları `/login`, onboarding süreci tamamlanmamış kullanıcıları `/onboarding/role` adresine yönlendirir.
+- **Giriş ve Yetkilendirme**: `/admin` rotası sadece Supabase oturumunda `role = 'admin'` olan kullanıcıları kabul eder. Guard, doğrulanmamış kullanıcıları `/login`, vendor başvurusu bekleyen kullanıcıları `/vendor/apply` adresine yönlendirir.
 - **Ön Koşul**: `.env.local` içinde `SUPABASE_SERVICE_ROLE_KEY` tanımlı olmalıdır; aksi halde panel yüklenirken hata fırlatılır.
 - **KPI Kartları**: Üst bölümde toplam kullanıcı sayısı, bekleyen vendor/kurye başvuruları ve son 24 saatte katılan kullanıcılar özetlenir. Değerler Supabase'den gerçek zamanlı alınır.
 - **Başvuru Yönetimi**: Vendor ve kurye tablolarında onay/ret butonlarına basıldığında ilgili başvuru kayıtları güncellenir ve kullanıcının rolü (`auth.users` + `public.users`) otomatik senkronize edilir. Red işlemi kullanıcı rolünü `pending` durumuna döndürür.

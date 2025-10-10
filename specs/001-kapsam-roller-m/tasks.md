@@ -84,11 +84,11 @@
 - [X] T018 [P] Order tracking page (app/orders/[id]/page.tsx)
 - [X] T019 API route: order creation (app/api/orders/route.ts)
 - [X] T046 [UI] Port landing page with Supabase search
-- [ ] T047 [UI] Auth screens (login/register)
-- [ ] T048 [UX] Role selection onboarding
-- [ ] T048A Create `/onboarding/role` wizard
-- [ ] T048B Persist role selection in Supabase
-- [ ] T048C Add Playwright coverage for onboarding
+- [ ] T047 [UX] Vendor başvuru akışı (register CTA + form)
+- [ ] T047A [Data] Vendor başvuru bilgilerini Supabase'e kaydet (business name/type, iletişim)
+- [ ] T048 [Notif] Vendor onay e-postası ve dashboard aktivasyonu
+- [ ] T048B [UX] Vendor başvuru durum ekranı
+- [ ] T052 [UI] Customer dashboard (default rol için temel sayfa)
 
 ---
 
@@ -105,7 +105,7 @@
 - [X] T044 [Data] Wire vendor dashboard to Supabase
 - [ ] T045 [Data] Wire courier dashboard to Supabase
 - [X] T049 [Auth] Guard routes with session/role checks
-- [ ] T050 [Data] Vendor/courier application models
+- [ ] T050 [Data] Vendor/courier application modellerini güncelle (kurye self-signup devre dışı, vendor kota yönetimi)
 
 ---
 
@@ -251,8 +251,8 @@ Week 10: T093-T096 (Launch prep)
    - [ ] T087: Courier assignment
 
 3. **Priority 3 (MEDIUM):**
-   - [ ] T047: Auth screens
-   - [ ] T048: Role onboarding
+   - [ ] T047: Vendor başvuru akışı
+   - [ ] T048: Vendor onay bildirimleri
    - [ ] T041: Shared components
 
 ---

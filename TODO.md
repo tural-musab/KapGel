@@ -155,6 +155,13 @@ Yeni bir developer için:
   - ✓ Error handling validation
   - ✓ Performance tests included
 
+### Track 5: Vendor Başvuru & Müşteri Deneyimi (YENİ)
+- [ ] **T047:** Kayıt sayfasından vendor başvuru CTA'sı ve formu
+- [ ] **T047A:** Vendor başvuru verilerini Supabase `vendor_applications` tablosuna işlemek (business name/type, iletişim)
+- [ ] **T048:** Admin onay e-postası ve vendor dashboard aktivasyonu
+- [ ] **T048B:** Vendor başvurusu durumu (pending/onaylandı) için kullanıcı geri bildirimi
+- [ ] **T052:** Müşteri rolü için basit dashboard / giriş sonrası yönlendirme
+
 ---
 
 ## 📅 WEEK 6: Courier Dashboard + Tests
@@ -232,8 +239,8 @@ Yeni bir developer için:
   - 📁 Files:
     * `src/lib/notifications/web-push.ts` (VAPID service)
     * `src/app/api/notifications/trigger/route.ts` (Internal trigger)
-    * `supabase/migrations/20250110_add_order_notification_trigger.sql` (DB trigger)
-    * `supabase/migrations/20250110_update_notifications_table.sql` (Schema)
+    * `supabase/migrations/20250110000000_add_order_notification_trigger.sql` (DB trigger)
+    * `supabase/migrations/20250110000100_update_notifications_table.sql` (Schema)
     * `public/sw.js` (Service Worker)
   - ✓ 9 notification types implemented
   - ✓ Automatic trigger on order status change

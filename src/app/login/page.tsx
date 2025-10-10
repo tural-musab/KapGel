@@ -44,7 +44,13 @@ export default async function LoginPage() {
         </Link>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-6 pb-16">
+      <main className="flex flex-1 flex-col items-center gap-6 px-6 pb-16">
+        <p className="text-sm text-gray-500">
+          İşletme sahibi misin?{' '}
+          <Link className="font-medium text-orange-600" href="/vendor/apply">
+            Başvuru formuna git
+          </Link>
+        </p>
         <LoginForm supabaseReady={supabaseReady} />
       </main>
     </div>

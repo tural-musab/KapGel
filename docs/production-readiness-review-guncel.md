@@ -481,10 +481,10 @@
     - UI skeleton var ama API integration yok
     - Delivery/pickup selection incomplete
     - Payment flow needs work
-  3. Auth/Onboarding Flow
-    - Login/register pages var ama auth logic eksik
-    - Role selection wizard needs work
-    - Session guards incomplete
+ 3. Auth/Vendor Başvurusu
+    - Login/register sayfalarında vendor CTA eklenmeli
+    - Vendor başvuru formu + admin onay e-postaları tamamlanmalı
+    - Session guard'lar yeni rota (vendor/apply, dashboard) için güncellenmeli
   4. Performance Monitoring
     - Rate limiting memory-based (Redis migration Week 11)
     - Performance budgets defined but not enforced
@@ -556,9 +556,9 @@
   5. T047-T048: Auth Screens (2 days)
 
 - Supabase Auth integration (login/register)
-- Role selection wizard (/onboarding/role)
+- Vendor başvuru formu (/vendor/apply)
 - Session guards (middleware.ts)
-- Redirect logic (pending → onboarding, approved → dashboard)
+- Redirect logic (customer → dashboard, vendor_pending → vendor/apply, approved → vendor dashboard)
 
   8.2 Short-Term (Next 2 Weeks)
 
@@ -687,7 +687,7 @@
   1. Week 7-9 tasks'lerine derhal başlanmalı
   2. Map + Push notifications ASAP (1 hafta içinde)
   3. Checkout flow tamamlanmalı (delivery/pickup selection)
-  4. Auth flow completion (role onboarding)
+  4. Auth flow completion (vendor başvuru formu + müşteri dashboard)
   5. Performance monitoring enforcement başlatılmalı
 
   Timeline Revizyonu:

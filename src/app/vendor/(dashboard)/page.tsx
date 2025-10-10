@@ -81,7 +81,7 @@ export default async function VendorDashboardPage() {
   if (vendorIds.length === 0 && adminClient) {
     const { data: vendorInfo } = await adminClient
       .from('vendor_applications')
-      .select('business_name,status')
+      .select('business_name,business_type,status')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -97,6 +97,7 @@ export default async function VendorDashboardPage() {
         .insert({
           owner_user_id: user.id,
           name: fallbackName,
+          business_type: vendorInfo?.business_type ?? 'restaurant',
           verified: false,
         });
 

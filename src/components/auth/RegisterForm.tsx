@@ -51,7 +51,7 @@ export function RegisterForm({ supabaseReady }: Props) {
         options: {
           data: {
             full_name: form.fullName,
-            role: 'pending',
+            role: 'customer',
           },
           emailRedirectTo: `${window.location.origin}/login`,
         },
@@ -88,6 +88,12 @@ export function RegisterForm({ supabaseReady }: Props) {
           Zaten hesabın var mı?{' '}
           <Link className="font-medium text-orange-600" href="/login">
             Giriş Yap
+          </Link>
+        </p>
+        <p className="mt-4 text-sm text-gray-500">
+          İşletme sahibi misin?{' '}
+          <Link className="font-medium text-orange-600" href="/vendor/apply">
+            İşletme başvurusu yap
           </Link>
         </p>
       </header>

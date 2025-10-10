@@ -11,13 +11,13 @@ type RoleResolution = {
 };
 
 const ROLE_TARGETS: Record<PrimaryRole, string> = {
-  customer: '/',
+  customer: '/dashboard',
   vendor_admin: '/vendor',
   courier: '/courier',
   admin: '/admin',
 };
 
-const PENDING_STATES: PendingRole[] = ['pending', 'vendor_admin_pending', 'courier_pending'];
+const PENDING_STATES: PendingRole[] = ['vendor_admin_pending', 'courier_pending'];
 
 export function extractRoleMetadata(user: User | null | undefined): AppRoleMetadata {
   const candidate = (user?.user_metadata?.role ?? user?.app_metadata?.role) as AppRoleMetadata;
@@ -28,10 +28,31 @@ export function extractRoleMetadata(user: User | null | undefined): AppRoleMetad
 }
 
 export function resolveRoleRedirect(role: AppRoleMetadata): RoleResolution {
-  if (!role || (PENDING_STATES as string[]).includes(role)) {
+  if (!role) {
+    return {
+      needsOnboarding: false,
+      target: '/dashboard',
+    };
+  }
+
+  if (role === 'vendor_admin_pending') {
     return {
       needsOnboarding: true,
-      target: '/onboarding/role',
+      target: '/vendor/apply',
+    };
+  }
+
+  if (role === 'courier_pending') {
+    return {
+      needsOnboarding: true,
+      target: '/courier',
+    };
+  }
+
+  if (role === 'pending') {
+    return {
+      needsOnboarding: false,
+      target: '/dashboard',
     };
   }
 

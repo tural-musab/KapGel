@@ -148,7 +148,7 @@ async function ensureVendorProfile(
 
   const { data: applicationRows, error: applicationLookupError } = await adminClient
     .from('vendor_applications')
-    .select('business_name')
+    .select('business_name,business_type,contact_phone')
     .eq('user_id', userId)
     .limit(1);
 
@@ -157,6 +157,7 @@ async function ensureVendorProfile(
   }
 
   const businessName = applicationRows?.[0]?.business_name?.trim();
+  const businessType = applicationRows?.[0]?.business_type ?? 'restaurant';
   const fallbackFromEmail = user?.email ? user.email.split('@')[0] ?? null : null;
   const defaultName = fallbackFromEmail && fallbackFromEmail.length > 0 ? fallbackFromEmail : `Vendor ${userId.slice(0, 8)}`;
   const insertName = businessName && businessName.length > 1 ? businessName : defaultName;
@@ -166,6 +167,7 @@ async function ensureVendorProfile(
     .insert({
       owner_user_id: userId,
       name: insertName,
+      business_type: businessType,
       verified: false,
     })
     .select('id')

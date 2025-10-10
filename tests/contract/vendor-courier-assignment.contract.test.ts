@@ -15,7 +15,7 @@ const TEST_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 let testVendorId: string
 let testCourierId: string  
 let testOrderId: string
-let vendorToken: string
+let vendorToken: string = 'test-vendor-token'
 
 const supabase = createClient(TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY)
 

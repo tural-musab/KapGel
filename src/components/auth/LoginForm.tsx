@@ -54,6 +54,13 @@ export function LoginForm({ supabaseReady }: Props) {
       }
 
       const roleMetadata = extractRoleMetadata(data.user);
+
+      try {
+        await fetch('/api/auth/sync', { method: 'POST' });
+      } catch (syncError) {
+        console.warn('Kullanıcı profili senkronizasyonu başarısız oldu', syncError);
+      }
+
       const { target } = resolveRoleRedirect(roleMetadata);
 
       router.push(target);

@@ -222,7 +222,7 @@ describe('Database Integrity', () => {
 - ✅ `vendor-flow.spec.ts` - Order management
 - ✅ `courier-flow.spec.ts` - Delivery workflow
 - ✅ `auth-flow.spec.ts` - Authentication flows
-- ✅ `onboarding-flow.spec.ts` - Role onboarding
+- ✅ `onboarding-flow.spec.ts` - (Güncellenecek) Vendor başvuru akışı
 
 **Test Scenarios**:
 

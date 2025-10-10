@@ -63,11 +63,15 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 - **FR-013**: The system MUST include a manual KYC (Know Your Customer) process for vendor verification, requiring document uploads and admin approval.
 - **FR-014**: The system MUST enforce that only vendors with their own courier staff can operate on the platform. Each courier MUST be associated with a single vendor (no shared courier pool across vendors).
 - **FR-015**: The platform MUST NOT provide centralized courier management or dispatch services. All courier assignment and management is the vendor's responsibility.
+- **FR-016**: Customer registrations MUST become active immediately after email verification without further onboarding or admin approval.
+- **FR-017**: Vendor applicants MUST complete a post-sign-up application form (business name, business type, contact details at minimum) and await admin approval before accessing vendor dashboards.
+- **FR-018**: Courier accounts MUST be provisioned by approved vendors (or platform admins) and self-service courier registration MUST remain disabled in the MVP.
 
 ### Key Entities *(include if feature involves data)*
 
 - **User**: Represents an actor in the system with an assigned role (`customer`, `vendor admin`, `courier`, `admin`).
 - **Vendor**: Represents a business entity, which undergoes a manual verification process (KYC) including `tax_no` and document checks.
+- **Vendor Application**: Captures business name, business type (MVP: `restaurant` veya `cafe`; `market`, `grocery/bakkal`, `pharmacy/eczane` seçenekleri formda gösterilir ancak seçilemez) ve iletişim bilgilerini, admin onayı bekleyen başvurular için kullanılır.
 - **Branch**: Represents a physical location of a Vendor, with its own address and an optional `delivery_zone_geojson`.
 - **Courier**: Represents a user responsible for delivering orders for a specific Vendor.
 - **Order**: Represents a customer's request, containing items, delivery/pickup choice, status, and a delivery address stored as `address_text` and a `geo_point`.
@@ -94,7 +98,7 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
 ## Personas & Experience Principles
 
 - **Customer (B2C)**: Prioritises fast search, clear delivery expectations, and frictionless reorder flow. Orders directly from local businesses they know and trust.
-- **Vendor Admin (B2B)**: Owns and manages their own delivery team. Needs dashboard clarity, status prioritisation, and easy courier assignment **from their own courier staff**. Unlike platforms with shared courier pools, they have full control and visibility over their team's performance.
+- **Vendor Admin (B2B)**: Owns and manages their own delivery team. Needs dashboard clarity, status prioritisation, and easy courier assignment **from their own courier staff**. Unlike platforms with shared courier pools, they have full control and visibility over their team's performance. Vendor admins apply via a dedicated form after registering a user account and must wait for platform approval before accessing the dashboard.
 - **Courier (Operations)**: Works exclusively for a single vendor. Requires quick task triage, mobile-friendly controls, and minimal data entry. Their employment relationship is with the vendor, not the platform.
 - **System Admin**: Oversees vendor onboarding (verifying they have courier capacity), dispute resolution, and platform health. Does NOT manage courier operations or assignments.
 
@@ -127,7 +131,7 @@ As a courier, I want to manage my availability, accept delivery tasks, and updat
    - Confirm delivery with optional photo/signature upload (MVP stores metadata, file upload backlog).
 
 4. **Admin Oversight**
-   - Review vendor KYC submissions, approve/deny.
+   - Review vendor KYC submissions, approve/deny, and trigger post-approval email notifications.
    - Monitor active orders, intervene on SLA breaches.
    - Export activity logs for auditing.
 

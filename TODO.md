@@ -165,7 +165,7 @@ Yeni bir developer için:
 - [X] **T028:** PWA install prompt
   - [X] `beforeinstallprompt` event yakalanıyor, deferred prompt yönetiliyor
   - [X] Landing sayfasında banner/CTA gösterimi
-  - [ ] Install / dismiss eventlerinin loglanması (analytics backlog)
+  - [X] Install / dismiss eventlerinin loglanması
 - [ ] **T091:** Realtime order updates E2E testi
   - [ ] Playwright senaryosu: vendor status değişimi → müşteri sayfasında canlı güncelleme
   - [ ] Test verisi hazırlığı (order seed + mock status transitions)

@@ -14,9 +14,10 @@
 
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createClient } from 'lib/supabase/client';
-import { Bike, DollarSign, Filter, Package, Star, Bell } from 'lucide-react';
+import { Bike, DollarSign, Filter, Package, Star, Bell, Home, LogOut } from 'lucide-react';
 import { DashboardStatCard, OrderStatusBadge } from '@/components/ui/dashboard';
 import type { DashboardStatCardProps } from '@/components/ui/dashboard';
 
@@ -278,6 +279,37 @@ export function VendorDashboardClient({
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pb-16 pt-20">
       <div className="mx-auto max-w-7xl px-6">
+        <nav className="mb-8 flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/90 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white">
+              <Package className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-orange-600">İşletme Merkezi</p>
+              <h1 className="text-xl font-semibold text-gray-900 md:text-2xl">{vendorName}</h1>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-orange-400 hover:text-orange-600"
+            >
+              <Home className="h-4 w-4" />
+              Ana Sayfa
+            </Link>
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-lg"
+              >
+                <LogOut className="h-4 w-4" />
+                Çıkış Yap
+              </button>
+            </form>
+          </div>
+        </nav>
+
         {/* New Order Alert */}
         {newOrderAlert && (
           <div className="fixed right-6 top-24 z-50 animate-slide-in-right rounded-xl border border-green-200 bg-green-50 p-4 shadow-lg">
@@ -293,7 +325,7 @@ export function VendorDashboardClient({
 
         <header className="mb-8">
           <p className="text-sm font-medium text-orange-600">İşletme Paneli</p>
-          <h1 className="text-3xl font-bold text-gray-900">{vendorName}</h1>
+          <h2 className="text-3xl font-bold text-gray-900">{vendorName}</h2>
           <p className="text-sm text-gray-600">
             Canlı sipariş akışı, menü yönetimi ve performans metrikleri
           </p>

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, User as SupabaseAuthUser } from '@supabase/supabase-js';
 
 import { createAdminClient } from 'lib/supabase/admin';
 import { createClient } from 'lib/supabase/server';
@@ -125,6 +125,65 @@ async function syncRoleWithApplications(
   }
 }
 
+async function ensureVendorProfile(
+  adminClient: SupabaseClient,
+  userId: string,
+  user: SupabaseAuthUser | null,
+) {
+  const { data: existingVendors, error: vendorLookupError } = await adminClient
+    .from('vendors')
+    .select('id')
+    .eq('owner_user_id', userId)
+    .limit(1);
+
+  if (vendorLookupError) {
+    throw new Error(vendorLookupError.message ?? 'Vendor bilgisi alınamadı.');
+  }
+
+  const existingVendorId = existingVendors?.[0]?.id ?? null;
+
+  if (existingVendorId) {
+    return existingVendorId;
+  }
+
+  const { data: applicationRows, error: applicationLookupError } = await adminClient
+    .from('vendor_applications')
+    .select('business_name')
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (applicationLookupError) {
+    throw new Error(applicationLookupError.message ?? 'Başvuru bilgisi alınamadı.');
+  }
+
+  const businessName = applicationRows?.[0]?.business_name?.trim();
+  const fallbackFromEmail = user?.email ? user.email.split('@')[0] ?? null : null;
+  const defaultName = fallbackFromEmail && fallbackFromEmail.length > 0 ? fallbackFromEmail : `Vendor ${userId.slice(0, 8)}`;
+  const insertName = businessName && businessName.length > 1 ? businessName : defaultName;
+
+  const { data: insertedVendors, error: insertError } = await adminClient
+    .from('vendors')
+    .insert({
+      owner_user_id: userId,
+      name: insertName,
+      verified: false,
+    })
+    .select('id')
+    .limit(1);
+
+  if (insertError) {
+    throw new Error(insertError.message ?? 'Vendor kaydı oluşturulamadı.');
+  }
+
+  const vendorId = insertedVendors?.[0]?.id ?? null;
+
+  if (!vendorId) {
+    throw new Error('Vendor kaydı oluşturulamadı.');
+  }
+
+  return vendorId;
+}
+
 async function updateRoleRecords(adminClient: SupabaseClient, userId: string, role: RoleState) {
   const { data: existingUser, error: fetchError } = await adminClient.auth.admin.getUserById(userId);
   if (fetchError) {
@@ -163,6 +222,8 @@ async function updateRoleRecords(adminClient: SupabaseClient, userId: string, ro
   if (userUpdateError) {
     throw new Error(userUpdateError.message ?? 'Kullanıcı rolü güncellenemedi.');
   }
+
+  return currentUser;
 }
 
 async function handleRoleChange(userId: string, nextRole: string): Promise<AdminActionResult | AdminActionError> {
@@ -174,8 +235,11 @@ async function handleRoleChange(userId: string, nextRole: string): Promise<Admin
     const { adminClient } = await ensureAdminSession();
     const role = nextRole as RoleState;
 
-    await updateRoleRecords(adminClient, userId, role);
+    const currentUser = await updateRoleRecords(adminClient, userId, role);
     await syncRoleWithApplications(adminClient, userId, role);
+    if (role === 'vendor_admin') {
+      await ensureVendorProfile(adminClient, userId, currentUser);
+    }
 
     revalidatePath('/admin');
     return { ok: true, message: 'Rol güncellendi.' };
@@ -232,8 +296,9 @@ export async function approveVendorApplication(
       throw new Error(applicationUpdateError.message ?? 'Başvuru güncellenemedi.');
     }
 
-    await updateRoleRecords(adminClient, userId, 'vendor_admin');
+    const currentUser = await updateRoleRecords(adminClient, userId, 'vendor_admin');
     await syncRoleWithApplications(adminClient, userId, 'vendor_admin');
+    await ensureVendorProfile(adminClient, userId, currentUser);
 
     revalidatePath('/admin');
     return { ok: true, message: 'İşletme başvurusu onaylandı.' };

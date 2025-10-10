@@ -64,8 +64,10 @@ export function InstallPrompt() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         console.info('[PWA] install accepted');
+        logTelemetry('accepted');
       } else {
         console.info('[PWA] install dismissed');
+        logTelemetry('dismissed');
         storeDismissTimestamp();
       }
       setVisible(false);
@@ -78,6 +80,7 @@ export function InstallPrompt() {
   };
 
   const handleDismiss = () => {
+    logTelemetry('dismissed');
     storeDismissTimestamp();
     setVisible(false);
     setDeferredPrompt(null);
@@ -112,4 +115,27 @@ export function InstallPrompt() {
       </div>
     </div>
   );
+}
+
+function logTelemetry(event: 'accepted' | 'dismissed') {
+  try {
+    const payload = JSON.stringify({
+      event,
+      platform: navigator.platform,
+      timestamp: Date.now(),
+    });
+
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/telemetry/pwa-install', payload);
+    } else {
+      fetch('/api/telemetry/pwa-install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      });
+    }
+  } catch (error) {
+    console.warn('PWA telemetry failed', error);
+  }
 }

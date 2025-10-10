@@ -12,7 +12,7 @@ import {
   Star,
 } from 'lucide-react';
 
-
+import { AppHeader } from '@/components/layout/AppHeader';
 import { DashboardStatCard } from '@/components/ui/dashboard';
 import type { AppRoleMetadata, PrimaryRole } from 'lib/auth/roles';
 
@@ -84,60 +84,18 @@ export function LandingClient({ cities, vendors, stats, supabaseReady, session }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pb-24">
-      <header className="relative overflow-hidden bg-white">
-        <div className="border-b border-orange-100 bg-white/70">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-sm font-medium text-gray-600">
-            <span className="text-orange-600">KapGel</span>
+      <div className="border-b border-orange-100 bg-white/80">
+        <AppHeader
+          className="mx-auto max-w-6xl px-6 py-4 text-sm font-medium text-gray-600"
+          rightSlot={
             <div className="flex items-center gap-3">
-              {session.role ? (
-                session.needsOnboarding ? (
-                  <Link
-                    href="/vendor/apply"
-                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
-                  >
-                    Rolünü Tamamla
-                  </Link>
-                ) : (
-                  <>
-                    <span className="hidden text-sm text-gray-500 sm:inline">{session.email ?? ''}</span>
-                    <Link
-                      href={session.target || '/'}
-                      className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-orange-600 shadow-sm transition hover:border-orange-400"
-                    >
-                      {session.resolvedRole === 'admin'
-                        ? 'Yönetim Paneli'
-                        : session.resolvedRole === 'vendor_admin'
-                          ? 'İşletme Paneli'
-                          : session.resolvedRole === 'courier'
-                            ? 'Kurye Paneli'
-                            : 'Rolünü Yönet'}
-                    </Link>
-                    <form action="/auth/signout" method="post">
-                      <button
-                        type="submit"
-                        className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
-                      >
-                        Çıkış
-                      </button>
-                    </form>
-                  </>
-                )
-              ) : (
-                <>
-                  <Link href="/login" className="hover:text-orange-600">
-                    Giriş Yap
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
-                  >
-                    Kayıt Ol
-                  </Link>
-                </>
-              )}
+              {session.role ? renderAuthenticatedActions(session) : renderGuestActions()}
             </div>
-          </div>
-        </div>
+          }
+        />
+      </div>
+
+      <header className="relative overflow-hidden bg-white">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-orange-500 via-red-500 to-purple-500 opacity-10" />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-6 pb-16 pt-20 lg:flex-row lg:items-center">
           <div className="flex-1 space-y-6">
@@ -276,5 +234,60 @@ export function LandingClient({ cities, vendors, stats, supabaseReady, session }
         </section>
       </main>
     </div>
+  );
+}
+
+function renderGuestActions() {
+  return (
+    <>
+      <Link href="/login" className="hover:text-orange-600">
+        Giriş Yap
+      </Link>
+      <Link
+        href="/register"
+        className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
+      >
+        Kayıt Ol
+      </Link>
+    </>
+  );
+}
+
+function renderAuthenticatedActions(session: LandingClientProps['session']) {
+  if (session.needsOnboarding) {
+    return (
+      <Link
+        href="/vendor/apply"
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
+      >
+        Rolünü Tamamla
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <span className="hidden text-sm text-gray-500 sm:inline">{session.email ?? ''}</span>
+      <Link
+        href={session.target || '/'}
+        className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-orange-600 shadow-sm transition hover:border-orange-400"
+      >
+        {session.resolvedRole === 'admin'
+          ? 'Yönetim Paneli'
+          : session.resolvedRole === 'vendor_admin'
+            ? 'İşletme Paneli'
+            : session.resolvedRole === 'courier'
+              ? 'Kurye Paneli'
+              : 'Rolünü Yönet'}
+      </Link>
+      <form action="/auth/signout" method="post">
+        <button
+          type="submit"
+          className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-white shadow-sm hover:opacity-90"
+        >
+          Çıkış
+        </button>
+      </form>
+    </>
   );
 }

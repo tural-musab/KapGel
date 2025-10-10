@@ -47,11 +47,14 @@ export default async function VendorDashboardPage() {
   const { supabase, user } = await requireRole(['vendor_admin', 'admin']);
 
   // Get vendor
-  const { data: vendorRows } = await supabase
+  const { data: vendorRows, error: vendorFetchError } = await supabase
     .from('vendors')
     .select('id,name')
     .eq('owner_user_id', user.id);
 
+  if (vendorFetchError) {
+    console.error('Vendor fetch error', vendorFetchError);
+  }
   let vendors = (vendorRows ?? []) as VendorRow[];
   let vendorIds = vendors.map((vendor) => vendor.id);
 
@@ -85,6 +88,14 @@ export default async function VendorDashboardPage() {
             .from('vendors')
             .select('id,name')
             .eq('owner_user_id', user.id);
+
+          if (insertError && insertError.code !== '23505') {
+            console.error('Vendor insert failed in dashboard self-heal', {
+              userId: user.id,
+              message: insertError.message,
+              code: insertError.code,
+            });
+          }
 
           vendors = (refreshedVendors ?? []) as VendorRow[];
           vendorIds = vendors.map((vendor) => vendor.id);

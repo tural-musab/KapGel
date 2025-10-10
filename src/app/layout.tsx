@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 
@@ -7,8 +7,11 @@ export const metadata: Metadata = {
   title: { default: 'Kap-Gel', template: '%s | Kap-Gel' },
   description: 'Kap-Gel — Gönder Gelsin. Kendi kuryesi olan işletmeler ve gel-al için PWA.',
   applicationName: 'Kap-Gel',
-  themeColor: '#111827',
   manifest: '/manifest.webmanifest',
+};
+
+export const viewport: Viewport = {
+  themeColor: '#111827',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

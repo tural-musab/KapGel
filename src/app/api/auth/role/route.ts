@@ -3,6 +3,28 @@ import { NextResponse } from 'next/server';
 import { normalizeSelection, toPendingMetadata } from 'lib/auth/roles';
 import { createClient } from 'lib/supabase/server';
 import { createAdminClient } from 'lib/supabase/admin';
+import type { SupabaseClient, PostgrestSingleResponse } from '@supabase/supabase-js';
+
+type DbOperation<T> = (client: SupabaseClient) => Promise<PostgrestSingleResponse<T>>;
+
+async function runWithFallback<T>(
+  primary: SupabaseClient,
+  fallback: SupabaseClient | null,
+  operation: DbOperation<T>,
+) {
+  const primaryResult = await operation(primary);
+
+  if (!primaryResult.error) {
+    return primaryResult;
+  }
+
+  if (!fallback) {
+    return primaryResult;
+  }
+
+  console.warn('Supabase primary client failed, retrying with admin client', primaryResult.error);
+  return operation(fallback);
+}
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -45,59 +67,64 @@ export async function POST(request: Request) {
     role: metadataRole,
   } as const;
 
-  console.log('🔍 DEBUG: Attempting to upsert user:', {
-    userId: user.id,
-    email: user.email,
-    role: metadataRole,
-    authUid: user.id // Should match user.id
-  });
-
-  // Use admin client for users table operations to bypass RLS
   const adminClient = createAdminClient();
-  if (!adminClient) {
-    return NextResponse.json({ error: 'Admin client yapılandırması bulunamadı.' }, { status: 500 });
-  }
 
-  const { error: userUpsertError } = await adminClient.from('users').upsert(userRow, { onConflict: 'id' });
+  const userUpsertResult = await runWithFallback(
+    supabase,
+    adminClient,
+    (client) => client.from('users').upsert(userRow, { onConflict: 'id' }),
+  );
 
-  if (userUpsertError) {
+  if (userUpsertResult.error) {
     console.error('❌ User upsert error:', {
-      error: userUpsertError,
+      error: userUpsertResult.error,
       userId: user.id,
-      message: userUpsertError.message
+      message: userUpsertResult.error.message,
     });
-    return NextResponse.json({ error: userUpsertError.message ?? 'Kullanıcı rolü kaydedilemedi.' }, { status: 500 });
+    return NextResponse.json({ error: userUpsertResult.error.message ?? 'Kullanıcı rolü kaydedilemedi.' }, { status: 500 });
   }
 
   if (metadataRole === 'vendor_admin_pending') {
-    const { error: vendorApplicationError } = await adminClient
-      .from('vendor_applications')
-      .upsert(
-        {
-          user_id: user.id,
-          status: 'pending',
-        },
-        { onConflict: 'user_id' },
-      );
+    const vendorApplicationResult = await runWithFallback(
+      supabase,
+      adminClient,
+      (client) =>
+        client
+          .from('vendor_applications')
+          .upsert(
+            {
+              user_id: user.id,
+              status: 'pending',
+            },
+            { onConflict: 'user_id' },
+          ),
+    );
 
-    if (vendorApplicationError) {
-      return NextResponse.json({ error: vendorApplicationError.message ?? 'İşletme başvurusu oluşturulamadı.' }, { status: 500 });
+    if (vendorApplicationResult.error) {
+      console.error('Vendor application upsert failed', vendorApplicationResult.error);
+      return NextResponse.json({ error: vendorApplicationResult.error.message ?? 'İşletme başvurusu oluşturulamadı.' }, { status: 500 });
     }
   }
 
   if (metadataRole === 'courier_pending') {
-    const { error: courierApplicationError } = await adminClient
-      .from('courier_applications')
-      .upsert(
-        {
-          user_id: user.id,
-          status: 'pending',
-        },
-        { onConflict: 'user_id' },
-      );
+    const courierApplicationResult = await runWithFallback(
+      supabase,
+      adminClient,
+      (client) =>
+        client
+          .from('courier_applications')
+          .upsert(
+            {
+              user_id: user.id,
+              status: 'pending',
+            },
+            { onConflict: 'user_id' },
+          ),
+    );
 
-    if (courierApplicationError) {
-      return NextResponse.json({ error: courierApplicationError.message ?? 'Kurye başvurusu oluşturulamadı.' }, { status: 500 });
+    if (courierApplicationResult.error) {
+      console.error('Courier application upsert failed', courierApplicationResult.error);
+      return NextResponse.json({ error: courierApplicationResult.error.message ?? 'Kurye başvurusu oluşturulamadı.' }, { status: 500 });
     }
   }
 

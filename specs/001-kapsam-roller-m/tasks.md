@@ -84,8 +84,8 @@
 - [X] T018 [P] Order tracking page (app/orders/[id]/page.tsx)
 - [X] T019 API route: order creation (app/api/orders/route.ts)
 - [X] T046 [UI] Port landing page with Supabase search
-- [ ] T047 [UX] Vendor başvuru akışı (register CTA + form)
-- [ ] T047A [Data] Vendor başvuru bilgilerini Supabase'e kaydet (business name/type, iletişim)
+- [X] T047 [UX] Vendor başvuru akışı (register CTA + form)
+- [X] T047A [Data] Vendor başvuru bilgilerini Supabase'e kaydet (business name/type, iletişim)
 - [ ] T048 [Notif] Vendor onay e-postası ve dashboard aktivasyonu
 - [ ] T048B [UX] Vendor başvuru durum ekranı
 - [ ] T052 [UI] Customer dashboard (default rol için temel sayfa)
@@ -251,7 +251,7 @@ Week 10: T093-T096 (Launch prep)
    - [ ] T087: Courier assignment
 
 3. **Priority 3 (MEDIUM):**
-   - [ ] T047: Vendor başvuru akışı
+   - [ ] T048: Admin onay e-postası
    - [ ] T048: Vendor onay bildirimleri
    - [ ] T041: Shared components
 

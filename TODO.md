@@ -162,11 +162,10 @@ Yeni bir developer için:
 - [X] **T048B:** Vendor başvurusu durumu (pending/onaylandı) için kullanıcı geri bildirimi
 - [X] **T052:** Müşteri rolü için basit dashboard / giriş sonrası yönlendirme
 
-### Track 6: PWA & Realtime İnce İşler (Yeni)
-- [ ] **T028:** PWA install prompt
-  - [ ] Service worker’da `beforeinstallprompt` listener
-  - [ ] Kullanıcıya gösterilecek modal / CTA
-  - [ ] Install / dismiss eventlerinin loglanması
+- [X] **T028:** PWA install prompt
+  - [X] `beforeinstallprompt` event yakalanıyor, deferred prompt yönetiliyor
+  - [X] Landing sayfasında banner/CTA gösterimi
+  - [ ] Install / dismiss eventlerinin loglanması (analytics backlog)
 - [ ] **T091:** Realtime order updates E2E testi
   - [ ] Playwright senaryosu: vendor status değişimi → müşteri sayfasında canlı güncelleme
   - [ ] Test verisi hazırlığı (order seed + mock status transitions)

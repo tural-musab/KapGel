@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { DashboardStatCard } from '@/components/ui/dashboard';
 import type { AppRoleMetadata, PrimaryRole } from 'lib/auth/roles';
 
@@ -84,6 +85,7 @@ export function LandingClient({ cities, vendors, stats, supabaseReady, session }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pb-24">
+      <InstallPrompt />
       <div className="border-b border-orange-100 bg-white/80">
         <AppHeader
           className="mx-auto max-w-6xl px-6 py-4 text-sm font-medium text-gray-600"

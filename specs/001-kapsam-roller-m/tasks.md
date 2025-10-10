@@ -106,6 +106,9 @@
 - [ ] T045 [Data] Wire courier dashboard to Supabase
 - [X] T049 [Auth] Guard routes with session/role checks
 - [ ] T050 [Data] Vendor/courier application modellerini güncelle (kurye self-signup devre dışı, vendor kota yönetimi)
+- [ ] T051 [UI] Vendor panel kurye yönetimi (listele, yeni kurye daveti)
+- [ ] T052 [API] /api/vendor/couriers (create/list/delete)
+- [ ] T053 [RLS] Kurye kayıtlarının vendor bazlı RLS güncellemesi
 
 ---
 

@@ -173,6 +173,13 @@ Yeni bir developer için:
   - [ ] Simüle edilmiş konum publish → harita güncellemesini doğrula
   - [ ] Mobil viewport ve performans kontrolü
 
+### Track 7: Kurye Yönetimi
+- [ ] **T051:** Vendor panel kurye yönetimi arayüzü (listele + davet)
+- [ ] **T052A:** `/api/vendor/couriers` API (create/list/delete) + Supabase insert
+- [ ] **T052B:** Kurye silme/disable akışı ve rol güncellemeleri
+- [ ] **T053:** Supabase RLS güncellemeleri (kurye kayıtları vendor_id bazında)
+- [ ] **T054:** Playwright senaryosu: vendor kurye ekler → kurye paneline erişir
+
 ---
 
 ## 📅 WEEK 6: Courier Dashboard + Tests

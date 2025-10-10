@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   }
 
   if (metadataRole === 'vendor_admin_pending') {
-    const vendorApplicationResult = await runWithFallback(
+    await runWithFallback(
       supabase,
       adminClient,
       (client) =>
@@ -100,9 +100,49 @@ export async function POST(request: Request) {
           ),
     );
 
+    const vendorApplicationResult = await runWithFallback(
+      supabase,
+      adminClient,
+      (client) =>
+        client
+          .from('vendor_applications')
+          .upsert(
+            {
+              user_id: user.id,
+              status: 'pending',
+            },
+            { onConflict: 'user_id' },
+          ),
+    );
+    const businessName = vendorApplicationResult.data?.[0]?.business_name ?? null;
+    const fallbackFromEmail = user.email ? user.email.split('@')[0] ?? null : null;
+    const defaultName = fallbackFromEmail && fallbackFromEmail.length > 1 ? fallbackFromEmail : `Vendor ${user.id.slice(0, 8)}`;
+
     if (vendorApplicationResult.error) {
       console.error('Vendor application upsert failed', vendorApplicationResult.error);
       return NextResponse.json({ error: vendorApplicationResult.error.message ?? 'İşletme başvurusu oluşturulamadı.' }, { status: 500 });
+    }
+
+    const vendorInsertResult = await runWithFallback(
+      supabase,
+      adminClient,
+      (client) =>
+        client
+          .from('vendors')
+          .insert({
+            owner_user_id: user.id,
+            name: businessName && businessName.length > 1 ? businessName : defaultName,
+            verified: false,
+          })
+          .select('id'),
+    );
+
+    if (vendorInsertResult.error) {
+      const conflict = vendorInsertResult.error.code === '23505';
+      if (!conflict) {
+        console.error('Vendor insert failed', vendorInsertResult.error);
+        return NextResponse.json({ error: vendorInsertResult.error.message ?? 'Vendor kaydı oluşturulamadı.' }, { status: 500 });
+      }
     }
   }
 

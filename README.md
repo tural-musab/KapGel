@@ -83,6 +83,7 @@ For the full product specification, see [`specs/001-kapsam-roller-m/spec.md`](sp
    NEXT_PUBLIC_MAP_TILES_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
    NEXT_PUBLIC_SENTRY_DSN=
    RESEND_API_KEY=
+   RESEND_FROM_EMAIL=
    VAPID_PUBLIC_KEY=
    VAPID_PRIVATE_KEY=
    ```

@@ -6,6 +6,7 @@ import type { SupabaseClient, User as SupabaseAuthUser } from '@supabase/supabas
 
 import { createAdminClient } from 'lib/supabase/admin';
 import { createClient } from 'lib/supabase/server';
+import { sendVendorApprovalEmail } from '@/lib/notifications/email';
 
 export type AdminActionResult = {
   ok: true;
@@ -289,10 +290,12 @@ export async function approveVendorApplication(
 
     const now = new Date().toISOString();
 
-    const { error: applicationUpdateError } = await adminClient
+    const { data: applicationRow, error: applicationUpdateError } = await adminClient
       .from('vendor_applications')
       .update({ status: 'approved', updated_at: now })
-      .eq('id', applicationId);
+      .eq('id', applicationId)
+      .select('business_name,business_type,contact_phone')
+      .maybeSingle();
 
     if (applicationUpdateError) {
       throw new Error(applicationUpdateError.message ?? 'Başvuru güncellenemedi.');
@@ -301,6 +304,17 @@ export async function approveVendorApplication(
     const currentUser = await updateRoleRecords(adminClient, userId, 'vendor_admin');
     await syncRoleWithApplications(adminClient, userId, 'vendor_admin');
     await ensureVendorProfile(adminClient, userId, currentUser);
+
+    if (currentUser?.email) {
+      try {
+        await sendVendorApprovalEmail({
+          to: currentUser.email,
+          businessName: applicationRow?.business_name ?? null,
+        });
+      } catch (emailError) {
+        console.warn('Vendor approval email failed', emailError);
+      }
+    }
 
     revalidatePath('/admin');
     return { ok: true, message: 'İşletme başvurusu onaylandı.' };

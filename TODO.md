@@ -158,7 +158,7 @@ Yeni bir developer için:
 ### Track 5: Vendor Başvuru & Müşteri Deneyimi (YENİ)
 - [X] **T047:** Kayıt sayfasından vendor başvuru CTA'sı ve formu
 - [X] **T047A:** Vendor başvuru verilerini Supabase `vendor_applications` tablosuna işlemek (business name/type, iletişim)
-- [ ] **T048:** Admin onay e-postası ve vendor dashboard aktivasyonu
+- [X] **T048:** Admin onay e-postası ve vendor dashboard aktivasyonu
 - [ ] **T048B:** Vendor başvurusu durumu (pending/onaylandı) için kullanıcı geri bildirimi
 - [X] **T052:** Müşteri rolü için basit dashboard / giriş sonrası yönlendirme
 

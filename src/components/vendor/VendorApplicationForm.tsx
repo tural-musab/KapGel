@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type SVGProps } from 'react';
 import { useRouter } from 'next/navigation';
 
 type VendorApplicationFormProps = {
@@ -76,34 +76,18 @@ export function VendorApplicationForm({
   }
 
   return (
-    <div className="w-full max-w-2xl rounded-2xl border border-orange-100 bg-white/90 p-8 shadow-lg backdrop-blur">
-      <header className="mb-6 space-y-2 text-center">
+    <div className="w-full max-w-2xl space-y-6 rounded-2xl border border-orange-100 bg-white/90 p-8 shadow-lg backdrop-blur">
+      <header className="space-y-4 text-center">
         <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-500 text-white">
           KB
         </span>
-        <h1 className="text-2xl font-semibold text-gray-900">İşletme Başvurusu</h1>
-        <p className="text-sm text-gray-600">
-          KapGel işletme paneline erişmek için aşağıdaki bilgileri doldur. Onay süreci sonrası vendor paneli açılacaktır.
-        </p>
-        {status === 'pending' ? (
-          <p className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700">
-            Başvurun incelemede. Onay sonrası e-posta bildirimi alacaksın.
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold text-gray-900">İşletme Başvurusu</h1>
+          <p className="text-sm text-gray-600">
+            KapGel işletme paneline erişmek için aşağıdaki bilgileri doldur. Onay süreci sonrası vendor paneli açılacaktır.
           </p>
-        ) : null}
-        {status === 'approved' ? (
-          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-            Başvurun onaylandı.{' '}
-            <Link href="/vendor" className="font-semibold text-emerald-900 underline">
-              Vendor paneline geç
-            </Link>
-            .
-          </p>
-        ) : null}
-        {status === 'rejected' ? (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-            Başvurun reddedildi. Güncelleme yapıp tekrar gönderebilirsin.
-          </p>
-        ) : null}
+        </div>
+        <StatusBanner status={status} />
       </header>
 
       <form className="space-y-6" onSubmit={handleSubmit}>
@@ -188,5 +172,79 @@ export function VendorApplicationForm({
         </button>
       </form>
     </div>
+  );
+}
+
+function StatusBanner({ status }: { status: 'none' | 'pending' | 'approved' | 'rejected' }) {
+  if (status === 'approved') {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+        <CheckCircleIcon className="mt-0.5 h-5 w-5" />
+        <div>
+          <p className="font-semibold">Başvurun onaylandı!</p>
+          <p className="mt-1">
+            Vendor paneline giriş yaparak menünü yönetmeye başlayabilirsin.
+            {' '}
+            <Link href="/vendor" className="font-semibold text-emerald-900 underline">
+              Paneli aç
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'pending') {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
+        <PendingIcon className="mt-0.5 h-5 w-5" />
+        <div>
+          <p className="font-semibold">Başvurun incelemede</p>
+          <p className="mt-1">Onaylandığında e-posta bildirimi alacaksın. Destek ekibimiz genellikle 24 saat içinde dönüş yapıyor.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'rejected') {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <RejectIcon className="mt-0.5 h-5 w-5" />
+        <div>
+          <p className="font-semibold">Başvurun reddedildi</p>
+          <p className="mt-1">Bilgilerini güncelleyip tekrar gönderebilirsin. Yardım için <a href="mailto:support@kapgel.com" className="font-semibold underline">support@kapgel.com</a> ile iletişime geç.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function CheckCircleIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function PendingIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function RejectIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M9 9l6 6" />
+      <path d="M15 9l-6 6" />
+      <circle cx="12" cy="12" r="10" />
+    </svg>
   );
 }

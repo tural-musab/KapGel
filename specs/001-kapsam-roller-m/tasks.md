@@ -86,7 +86,7 @@
 - [X] T046 [UI] Port landing page with Supabase search
 - [X] T047 [UX] Vendor başvuru akışı (register CTA + form)
 - [X] T047A [Data] Vendor başvuru bilgilerini Supabase'e kaydet (business name/type, iletişim)
-- [ ] T048 [Notif] Vendor onay e-postası ve dashboard aktivasyonu
+- [X] T048 [Notif] Vendor onay e-postası ve dashboard aktivasyonu
 - [ ] T048B [UX] Vendor başvuru durum ekranı
 - [ ] T052 [UI] Customer dashboard (default rol için temel sayfa)
 

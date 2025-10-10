@@ -166,6 +166,15 @@ npm run test:contract
 | `pnpm test:e2e` | Playwright scenarios for customer/vendor/courier flows. |
 | `pnpm test:e2e --headed` | Optional headed run for manual accessibility and UX review (Axe automation pending). |
 
+> ℹ️ **Realtime E2E Tests**: `tests/e2e/realtime-order.spec.ts` ve `tests/e2e/realtime-courier.spec.ts` senaryolarını çalıştırmak için aşağıdaki ortam değişkenlerini tanımlayın:
+> ```env
+> TEST_SUPABASE_SERVICE_KEY=<supabase service role key>
+> TEST_ORDER_ID=<hazır order uuid>
+> TEST_VENDOR_TOKEN=<vendor auth token>  # service key kullanılmadığında zorunlu
+> TEST_COURIER_ID=<courier uuid>
+> ```
+> Hazır order/kuryeniz yoksa bu senaryolar otomatik olarak `skip` olur.
+
 CI iş akışı (`.github/workflows/ci.yml`) pnpm bağımlılıklarını kurup Supabase şemasını uygular, ardından lint, build ve test komutlarını çalıştırır.
 
 The CI pipeline uses the Supabase CLI to push schema changes; when you add migrations under `supabase/migrations/`, ensure the same `supabase db push` step continues to pass.

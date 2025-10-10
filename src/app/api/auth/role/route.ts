@@ -114,7 +114,12 @@ export async function POST(request: Request) {
             { onConflict: 'user_id' },
           ),
     );
-    const businessName = vendorApplicationResult.data?.[0]?.business_name ?? null;
+    type VendorApplicationRecord = {
+      business_name?: string | null;
+    };
+    const vendorApplicationRow =
+      (vendorApplicationResult.data?.[0] as VendorApplicationRecord | undefined) ?? null;
+    const businessName = vendorApplicationRow?.business_name ?? null;
     const fallbackFromEmail = user.email ? user.email.split('@')[0] ?? null : null;
     const defaultName = fallbackFromEmail && fallbackFromEmail.length > 1 ? fallbackFromEmail : `Vendor ${user.id.slice(0, 8)}`;
 

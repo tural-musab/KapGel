@@ -123,6 +123,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: vendorApplicationResult.error.message ?? 'İşletme başvurusu oluşturulamadı.' }, { status: 500 });
     }
 
+    const vendorName = businessName && businessName.length > 1 ? businessName : defaultName;
     const vendorInsertResult = await runWithFallback(
       supabase,
       adminClient,
@@ -131,15 +132,18 @@ export async function POST(request: Request) {
           .from('vendors')
           .insert({
             owner_user_id: user.id,
-            name: businessName && businessName.length > 1 ? businessName : defaultName,
+            name: vendorName,
             verified: false,
           })
           .select('id'),
     );
 
     if (vendorInsertResult.error) {
-      const conflict = vendorInsertResult.error.code === '23505';
-      if (!conflict) {
+      const isConflict =
+        vendorInsertResult.error.code === '23505' ||
+        vendorInsertResult.error.message?.includes('unique constraint');
+
+      if (!isConflict) {
         console.error('Vendor insert failed', vendorInsertResult.error);
         return NextResponse.json({ error: vendorInsertResult.error.message ?? 'Vendor kaydı oluşturulamadı.' }, { status: 500 });
       }

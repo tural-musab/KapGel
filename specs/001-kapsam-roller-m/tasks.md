@@ -198,8 +198,15 @@ Based on plan.md Öneri A, following tracks can run in parallel:
 - [ ] T025-T026 Web Push notifications
 - [ ] T027 Map component (MapLibre)
 - [ ] T028 PWA install prompt
+  - [ ] `beforeinstallprompt` event handling + UX
+  - [ ] Install / dismiss telemetry
+  - [ ] Service Worker güncellemesi
 - [ ] T091 Realtime order updates
+  - [ ] Playwright E2E senaryosu (vendor → müşteri canlı update)
+  - [ ] Test seed & cleanup script
 - [ ] T092 Courier location streaming
+  - [ ] Kurye konum yayın simulasyonu
+  - [ ] Mobil viewport performans doğrulaması
 
 ### Track 5: Polish & Testing (Week 8-10)
 **Owner:** QA + Frontend  

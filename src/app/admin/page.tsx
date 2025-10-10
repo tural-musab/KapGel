@@ -94,15 +94,15 @@ export default async function AdminDashboardPage() {
     adminClient
       .from('vendor_applications')
       .select('id,business_name,status,created_at,updated_at,users(id,email,role,created_at)')
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: false }),
     adminClient
       .from('courier_applications')
       .select('id,vehicle_type,status,created_at,updated_at,users(id,email,role,created_at)')
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: false }),
     adminClient
       .from('users')
       .select('id,email,role,created_at')
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: false }),
   ]);
 
   if (vendorApplicationsResult.error) {

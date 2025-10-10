@@ -6,6 +6,7 @@
 
 import { requireRole } from 'lib/auth/server-guard';
 import { VendorDashboardClient } from '@/components/vendor/DashboardClient';
+import { createAdminClient } from 'lib/supabase/admin';
 
 type VendorRow = {
   id: string;
@@ -51,8 +52,59 @@ export default async function VendorDashboardPage() {
     .select('id,name')
     .eq('owner_user_id', user.id);
 
-  const vendors = (vendorRows ?? []) as VendorRow[];
-  const vendorIds = vendors.map((vendor) => vendor.id);
+  let vendors = (vendorRows ?? []) as VendorRow[];
+  let vendorIds = vendors.map((vendor) => vendor.id);
+
+  if (vendorIds.length === 0) {
+    const adminClient = createAdminClient();
+
+    if (adminClient) {
+      const { data: vendorInfo } = await adminClient
+        .from('vendor_applications')
+        .select('business_name,status')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const isApproved = vendorInfo?.status === 'approved';
+      const fallbackName =
+        vendorInfo?.business_name?.trim()?.length
+          ? vendorInfo?.business_name.trim()
+          : user.email?.split('@')[0] ?? `Vendor ${user.id.slice(0, 8)}`;
+
+      if (isApproved) {
+        const { error: insertError } = await adminClient
+          .from('vendors')
+          .insert({
+            owner_user_id: user.id,
+            name: fallbackName,
+            verified: false,
+          });
+
+        if (!insertError) {
+          const { data: refreshedVendors } = await supabase
+            .from('vendors')
+            .select('id,name')
+            .eq('owner_user_id', user.id);
+
+          vendors = (refreshedVendors ?? []) as VendorRow[];
+          vendorIds = vendors.map((vendor) => vendor.id);
+        }
+      }
+    }
+
+    if (vendorIds.length === 0) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-white to-red-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Vendor Bulunamadı</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Bu hesap ile ilişkili bir vendor bulunamadı.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
 
   if (vendorIds.length === 0) {
     return (
